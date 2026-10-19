@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="theme-color" content="#f5f7fb"/>
+<meta name="description" content="PhD Atlas — 博士科研进展与个人成长工作台：日常记录、实验管理、文献雷达、论文写作和里程碑。"/>
+<title>PhD Atlas · 博士科研成长工作台</title>
+<link rel="stylesheet" href="./research.css?v=1"/>
+</head>
+<body>
+<div class="page">
+  <header class="topbar">
+    <a class="brand" href="./app.html" aria-label="返回博士成长首页">
+      <span class="brand-logo">✳</span>
+      <span>
+        <span class="brand-title"><h1>PhD Atlas</h1><span class="pill">博士成长工作台</span></span>
+        <span class="brand-sub">把每一天的科研过程，变成看得见的成长。</span>
+      </span>
+    </a>
+    <div class="header-right">
+      <span class="pill blue" id="profileYear">博士第 2 年</span>
+      <span class="header-date" id="topDate">科研日历</span>
+      <button type="button" data-view="settings">⚙ 设置与备份</button>
+      <span class="avatar">PhD</span>
+    </div>
+  </header>
+  <section class="intro">
+    <div><h2>把研究做深，把成长留下。</h2><p id="introDate">今天的科研，也值得记录。</p></div>
+    <div class="intro-badges"><span id="growthMetric">博士第 2 年</span><span id="entryMetric">0 条科研记录</span><span id="outcomeMetric">0 项成果</span></div>
+  </section>
+  <div class="view active" id="dashboardView">
+    <div class="dashboard-grid">
+      <aside class="panel inbox">
+        <div class="panel-head"><div class="icon-title"><span class="panel-symbol">✎</span><h2 class="panel-title">随手记 · Inbox</h2></div></div>
+        <p class="inbox-desc">先记下来，不必一次写得很完整。</p>
+        <form id="captureForm">
+          <div class="capture-box">
+            <textarea id="captureInput" name="text" required maxlength="12000" placeholder="今天做了什么？实验遇到什么问题？读到一句重要的话？或是突然有了一个想法……"></textarea>
+            <div id="captureTags" class="capture-tags"></div>
+            <div class="small muted" style="margin-bottom:7px">归档到 <strong id="selectedDate">今天</strong></div>
+            <button class="primary capture-save" type="submit">归档并保存 ↗</button>
+          </div>
+        </form>
+        <div class="divider"></div>
+        <h3 class="mini-heading">最近的科研记录</h3>
+        <div class="journal-list" id="quickEntries"><div class="empty">等待第一条科研日志。</div></div>
+        <div class="keyword-help">
+          <p><strong>这样开始就好</strong></p>
+          <p>“今天记录了一个值得进一步检验的问题。”</p>
+          <p>记录未解决的问题，同样是一种进展。</p>
+        </div>
+      </aside>
+      <section class="panel date-panel">
+        <div class="panel-head">
+          <div class="icon-title"><span class="panel-symbol">▦</span><h2 class="panel-title">日历与今天</h2></div>
+          <button class="text-btn" id="todayBtn">回到今天 ↗</button>
+        </div>
+        <div class="month-line">
+          <button class="circle-btn" data-act="prev-month" aria-label="上个月">‹</button>
+          <strong id="monthLabel">2026年 10月</strong>
+          <button class="circle-btn" data-act="next-month" aria-label="下个月">›</button>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+        <div class="day-summary">
+          <div class="day-summary-title"><span id="dayTitle">今日记录</span><span class="pill blue" id="dayCount">0 条记录</span></div>
+          <div id="dayNotes"><p class="empty">点击日期查看记录</p></div>
+        </div>
+        <div class="day-footer"><span>● 有记录的日期会显示小圆点</span><span>过去可补记，未来可安排</span></div>
+      </section>
+      <aside class="panel modules-panel">
+        <div class="panel-head"><div class="icon-title"><span class="panel-symbol">▧</span><h2 class="panel-title">我的科研模块</h2></div><span class="panel-caption">点卡片进入</span></div>
+        <div class="tile-grid" id="moduleTiles"></div>
+        <div class="divider"></div>
+        <div class="small muted"><strong style="color:#384763">博士第二年 · 研究建设期</strong><p>既记录已经完成的结果，也记录假设、失败、思考与能力积累。这里是你的长期研究档案，而不仅是日程表。</p></div>
+      </aside>
+    </div>
+    <section class="panel week-panel" style="margin-top:16px">
+      <div class="week-top"><div><div class="icon-title"><span class="panel-symbol">◷</span><h2 class="panel-title">每周科研节奏</h2></div><div class="panel-caption">计划 — 实验 — 复盘 — 积累</div></div><div style="display:flex;gap:8px;align-items:center"><span class="panel-caption" id="weekRange">本周</span><div class="week-switcher"><button class="circle-btn" data-act="prev-week" aria-label="上一周">‹</button><button class="circle-btn" data-act="next-week" aria-label="下一周">›</button></div></div></div>
+      <div class="week-days" id="weekDays"></div>
+      <div style="text-align:right;margin-top:11px"><button class="text-btn" data-view="review">写本周复盘 →</button></div>
+    </section>
+    <section class="bottom-grid">
+      <div class="panel">
+        <div class="panel-head"><div class="icon-title"><span class="panel-symbol">✓</span><h2 class="panel-title">本周要推进的事</h2></div><span class="panel-caption" id="taskMetric">0 项任务完成</span></div>
+        <form id="taskForm" class="task-row"><input name="title" required maxlength="400" aria-label="新任务" placeholder="新增一个具体、可完成的科研任务"/><input name="due" type="date" id="taskDate" aria-label="任务日期" required/><button type="submit">添加 +</button></form>
+        <div class="task-list" id="taskList"></div>
+        <p class="fine muted">把任务写成一个可验证的动作，例如“画出四种方法的 L2 随时间曲线”。</p>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="icon-title"><span class="panel-symbol">◇</span><h2 class="panel-title">当前研究主线</h2></div><button class="text-btn" data-view="experiments">查看全部 ↗</button></div>
+        <div class="track-list" id="trackList"></div>
+        <p class="fine muted">以下是初始整理的研究方向，状态可以随时更新。</p>
+      </div>
+    </section>
+  </div>
+  <div class="view" id="moduleView">
+    <div id="homeNav"></div>
+    <div id="moduleNav"></div>
+    <div id="moduleContent"></div>
+  </div>
+  <footer>PhD Atlas · 按你自己的节奏成长　·　记录仅存储在当前浏览器，建议定期备份　·　<a href="./papers.html" style="color:#6470ba">进入 PaperFlow 文献工作台 ↗</a></footer>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="./auth-config.js"></script><style>html{visibility:hidden}</style><script type="module" src="./auth-gate.js"></script>
+</body>
+</html>
