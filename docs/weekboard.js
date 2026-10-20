@@ -74,6 +74,42 @@ export function weekEvents(db,weekStart,now=new Date()){
     }
   }
  }
+ for(const session of (db.life?.sessions||[])){
+  if(!session)continue;
+  const segments=Array.isArray(session.segments)?session.segments:[];
+  if(!segments.length){
+    if(session.date)add({id:"life-focus:"+session.id,source:"duration",date:session.date,start:"",end:"",title:session.label||"生活专注",category:"生活",status:"已记录",note:Math.round((Number(session.seconds)||0)/60)+" 分钟（未保存具体时段）"});
+    continue;
+  }
+  for(const [i,segment] of segments.entries()){
+    if(!Number.isFinite(Number(segment.start))||!Number.isFinite(Number(segment.end)))continue;
+    let from=new Date(segment.start),to=new Date(segment.end);
+    if(!(from<to))continue;
+    while(from<to){
+      const date=dayString(from),midnight=new Date(from);
+      midnight.setHours(24,0,0,0);
+      const till=new Date(Math.min(to.getTime(),midnight.getTime()));
+      add({id:"life-focus:"+session.id+":"+i+":"+date,source:"focus",date,start:clock(from),end:till.getTime()===midnight.getTime()?"24:00":clock(till),title:session.label||"生活专注",category:"生活",status:"已记录",note:"来自生活空间专注计时"});
+      from=till;
+    }
+  }
+ }
+ const lifeTimer=db.life?.timer;
+ if(lifeTimer){
+  const parts=[...(lifeTimer.segments||[])];
+  if(Number.isFinite(lifeTimer.startedAt)&&lifeTimer.startedAt>0)parts.push({start:lifeTimer.startedAt,end:now.getTime(),active:true});
+  for(const [i,part] of parts.entries()){
+    if(!(Number(part.end)>Number(part.start)))continue;
+    let from=new Date(part.start),to=new Date(part.end);
+    while(from<to){
+      const date=dayString(from),midnight=new Date(from);
+      midnight.setHours(24,0,0,0);
+      const till=new Date(Math.min(to.getTime(),midnight.getTime()));
+      add({id:"life-pending:"+i+":"+date,source:"active",date,start:clock(from),end:till.getTime()===midnight.getTime()?"24:00":clock(till),title:lifeTimer.label||"生活专注",category:"生活",status:part.active?"进行中":"已暂停",note:"来自生活空间专注计时"});
+      from=till;
+    }
+  }
+ }
  for(const x of (db.activityEvents||[])){
   if(!x||!x.at||!x.title)continue;
   const date=dayString(new Date(x.at));const t=clock(new Date(x.at));
