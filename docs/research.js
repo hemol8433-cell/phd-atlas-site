@@ -68,10 +68,10 @@ function counts(date){return{n:db.entries.filter(x=>x.date===date).length,t:db.t
 function statusSelect(which,id,current){return '<select data-status="'+which+'" data-id="'+safe(id)+'" aria-label="更新进度">'+statusOptions.map(x=>'<option value="'+x+'"'+(x===current?' selected':'')+'>'+x+'</option>').join('')+'</select>'}
 function tracksHTML(){return db.tracks.map((x,i)=>'<div class="track"><span class="track-number">0'+(i+1)+'</span><div class="track-text"><strong>'+safe(x.title)+'</strong><p>'+safe(x.detail)+'</p></div>'+statusSelect('tracks',x.id,x.status)+'</div>').join('')}
 function renderDashboard(){
-  $('profileYear').textContent='博士第 '+db.year+' 年';
+  $('profileYear').textContent='我的空间';
   $('homeGreetingDate').textContent=verboseDate(TODAY);
   const root=$('homeDaybook');
-  if(!window.__weekboardLoader)window.__weekboardLoader=import("./weekboard.js?v=20261020-w1");
+  if(!window.__weekboardLoader)window.__weekboardLoader=import("./weekboard.js?v=20261020-w2");
   window.__weekboardLoader.then(mod=>{
     if(view==='dashboard')mod.renderWeekboard(root,{data:()=>db,save,toast});
   }).catch(error=>{
@@ -96,7 +96,7 @@ const meta={
  vault:['私人资料库','图片、文档、PDF 和研究材料保存在受保护的云端，支持跨设备读取。'],
  experiments:['实验日志','每次实验的目的、变量、结果、失败原因和下一步都值得追踪。'],
  questions:['研究问题库','把灵感变成假设，把卡住的地方变成可验证的问题。'],
- literature:['文献雷达','保留原 PaperFlow，每日发现与收藏仍然可以使用。'],
+ literature:['AI × 流体文献','每日推荐与中文摘要、论文筛选、阅读记录。'],
  writing:['论文写作','每次修改、一次推导、一张结果图，都是论文进度。'],
  growth:['技能与成长','这里记录学会的工具、科研方法与心态变化。'],
  milestones:['博士路线图','关注实际成长与研究成熟度，而不是机械地数毕业倒计时。'],
@@ -115,7 +115,7 @@ function renderModule(){
    el.innerHTML='<section class="panel"><h3>正在加载私人空间…</h3></section>';
    const isLife=view==='life';
    const key=isLife?'__lifeLoader':'__vaultLoader';
-   if(!window[key])window[key]=import(isLife?'./life.js?v=20261020-l1':'./vault.js?v=20261020-v1');
+   if(!window[key])window[key]=import(isLife?'./life.js?v=20261020-l2':'./vault.js?v=20261020-v1');
    window[key].then(mod=>{
      if(view!==(isLife?'life':'vault'))return;
      const api={data:()=>db,save,toast,session};
@@ -128,7 +128,7 @@ function renderModule(){
  }
  if(view==='projectday'){
    el.innerHTML='<section class="panel"><h3>正在加载科研执行中心…</h3></section>';
-   if(!window.__projectDayLoader)window.__projectDayLoader=import("./projectday.js?v=20261020-pd1");
+   if(!window.__projectDayLoader)window.__projectDayLoader=import("./projectday.js?v=20261020-pd2");
    window.__projectDayLoader.then(mod=>{
      if(view==='projectday')mod.renderProjectDay(el,{data:()=>db,save,toast});
    }).catch(error=>{
