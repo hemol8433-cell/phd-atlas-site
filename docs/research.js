@@ -130,7 +130,7 @@ function renderModule(){
 
  if(view==='milestones'){
    el.innerHTML='<div class="panel">正在加载个人里程碑…</div>';
-   if(!window.__milestoneLoader)window.__milestoneLoader=import("./milestones.js?v=20261020-m1");
+   if(!window.__milestoneLoader)window.__milestoneLoader=import("./milestones.js?v=20261020-reflections-1");
    window.__milestoneLoader.then(mod=>{
      if(view==='milestones')mod.renderMilestones(el,{data:()=>db,save,toast});
    }).catch(error=>{
