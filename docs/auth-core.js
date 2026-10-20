@@ -17,17 +17,18 @@ export async function createAuthContext() {
 
 export async function getAuthorizedUser(ctx) {
   if (!ctx.configured) return null;
+  // Auth verifies the access token with Supabase, not just the cached browser state.
   const { data, error } = await ctx.client.auth.getUser();
-  if (error || !data?.user) return null;
-  let identities = data.user.identities || [];
-  if (typeof ctx.client.auth.getUserIdentities === "function") {
-    const fresh = await ctx.client.auth.getUserIdentities();
-    if (!fresh.error && Array.isArray(fresh.data?.identities)) identities = fresh.data.identities;
-  }
-  const allowed = identities.some(identity =>
-    identity.provider === "github" &&
-    String(identity.provider_id) === String(ctx.config.allowedGithubUserId)
-  );
-  if (!allowed) return null;
-  return data.user;
+  if (error) throw error;
+  if (!data?.user) return null;
+
+  // Authorize with a server-side RLS decision, not an optional identity field
+  // in the browser SDK. The feed row is seeded and its SELECT policy grants
+  // access only when auth.identities contains the fixed GitHub account ID.
+  const check = await ctx.client.from("phd_private_papers")
+    .select("id")
+    .eq("id", 1)
+    .maybeSingle();
+  if (check.error) throw check.error;
+  return check.data?.id === 1 ? data.user : null;
 }
