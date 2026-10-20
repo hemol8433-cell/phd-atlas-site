@@ -19,14 +19,36 @@ try {
  assert.match(root.innerHTML,/今日重点/);
  assert.match(root.innerHTML,/专注计时/);
  assert.equal(data.entries[0].id,"existing");
- const submit=(name,values)=>{
-   const f={dataset:{pdForm:name},values};
+ const submit=(name,values,extra={})=>{
+   const f={dataset:{pdForm:name,...extra},values};
    f.closest=()=>f;
    root.onsubmit({target:f,preventDefault(){}});
  };
+ const click=(act,id,noteId)=>root.onclick({target:{closest:()=>({dataset:{pdAct:act,id,noteId}})}});
  submit("project",{title:"Transient cavity validation",category:"实验",description:"Four preprocessing modes",due:""});
  assert.equal(data.projectday.projects.length,1);
  const pid=data.projectday.projects[0].id;
+ assert.deepEqual(data.projectday.projects[0].progressNotes,[],"New projects start with an empty progress journal");
+ click("progress-open",pid);
+ assert.match(root.innerHTML,/这段时间推进了什么/,"Project cards should expose a progress editor");
+ submit("progress-note",{date:"2026-10-20",text:"Completed baseline comparison; PerTime improved pressure error but not velocity.",nextStep:"Inspect time-dependent standard deviation and PDE derivative consistency."},{projectId:pid});
+ assert.equal(data.projectday.projects[0].progressNotes.length,1,"Progress note should be saved on its project");
+ const progressId=data.projectday.projects[0].progressNotes[0].id;
+ assert.equal(data.projectday.projects[0].progressNotes[0].date,"2026-10-20");
+ assert.match(root.innerHTML,/Completed baseline comparison/);
+ click("progress-edit",pid,progressId);
+ assert.match(root.innerHTML,/保存修改/,"Existing progress should open in edit mode");
+ submit("progress-note",{date:"2026-10-21",text:"Rechecked baseline and documented the result.",nextStep:"Prepare a figure."},{projectId:pid});
+ assert.equal(data.projectday.projects[0].progressNotes.length,1,"Editing a progress note must not create a duplicate");
+ assert.equal(data.projectday.projects[0].progressNotes[0].date,"2026-10-21");
+ assert.equal(data.projectday.projects[0].progressNotes[0].text,"Rechecked baseline and documented the result.");
+ const roundtrip=mod.normalizeProjectDay(data.projectday);
+ assert.equal(roundtrip.projects[0].progressNotes[0].nextStep,"Prepare a figure.","Progress notes must survive normalization / reload");
+ click("progress-delete",pid,progressId);
+ assert.equal(data.projectday.projects[0].progressNotes.length,0,"Deleting should remove only the selected note");
+ assert.match(root.innerHTML,/还没有进展记录/);
+ const legacy=mod.normalizeProjectDay({projects:[{id:"legacy",title:"Legacy project"}]});
+ assert.deepEqual(legacy.projects[0].progressNotes,[],"Legacy projects remain valid without progressNotes");
  submit("task",{title:"Check four L2 curves",projectId:pid,quadrant:"Q2",due:"2026-10-25"});
  assert.equal(data.projectday.tasks.length,1);
  assert.equal(data.projectday.tasks[0].quadrant,"Q2");
@@ -42,7 +64,7 @@ try {
  assert.equal(data.entries.length,1,"Existing PhD entries must be preserved");
  assert(snapshots.length>=5,"All changes should sync using existing private save");
  assert(!root.innerHTML.includes("PRIVATE_KEY"));
- console.log("PASS: ProjectDay layout, projects, quadrant tasks, checkbox, daily notes, sessions, ideas, backward compatibility");
+ console.log("PASS: ProjectDay projects, dated progress create/edit/delete, legacy migration, tasks, daily notes, sessions and ideas");
 } finally {
  Object.assign(globalThis,original);
 }
