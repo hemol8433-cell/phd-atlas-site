@@ -51,7 +51,7 @@ export function renderProjectDay(root,api){
  '<div class="pd-top-grid"><section class="pd-panel pd-overview"><div class="pd-heading"><h3>01 · 项目总览</h3><span>本周 '+E(weekBegin)+' 至 '+E(weekEnd)+'</span></div><div class="pd-stats">',
  '<div><small>今日实际投入</small><b>'+duration(secToday)+'</b></div><div><small>本周专注</small><b>'+duration(secWeek)+'</b></div><div><small>进行中的项目</small><b>'+s.projects.filter(x=>x.status==="进行中").length+'</b></div><div><small>任务完成</small><b>'+taskCount+' / '+s.tasks.length+'</b></div>',
  '</div><p class="pd-hint">时间仅计算你记录的实际投入，不自动推测研究成果。</p></section>',
- '<section class="pd-panel pd-inspiration"><div class="pd-idea-types">'+KINDS.map(x=>'<button type="button" data-pd-act="idea-kind" data-kind="'+x+'" class="'+(x===kind?"selected":"")+'">'+x+'</button>').join("")+'</div><form data-pd-form="idea"><textarea name="text" required maxlength="2500" placeholder="一个想法、一条感悟或一个新的研究问题……"></textarea><button class="pd-primary" type="submit">记录到灵感库 ↗</button></form></section></div>',
+ '<section class="pd-panel pd-inspiration"><div class="pd-idea-types">'+KINDS.map(x=>'<button type="button" data-pd-act="idea-kind" data-pd-kind="'+x+'" class="'+(x===kind?"selected":"")+'">'+x+'</button>').join("")+'</div><form data-pd-form="idea"><textarea name="text" required maxlength="2500" placeholder="一个想法、一条感悟或一个新的研究问题……"></textarea><button class="pd-primary" type="submit">记录到灵感库 ↗</button></form></section></div>',
  '<div class="pd-title-line"><div><span class="pd-number">02</span><h3>今日与方向</h3><small>先确定重点，再管理任务优先级</small></div><div class="pd-week-nav"><button type="button" data-pd-act="prev-week">‹</button><span>'+E(weekBegin)+' — '+E(weekEnd)+'</span><button type="button" data-pd-act="next-week">›</button></div></div>',
  '<div class="pd-day-grid"><section class="pd-panel"><div class="pd-heading"><h3>今日重点 · 每日复盘</h3><span>完成比完美更重要</span></div><form class="pd-form pd-daily" data-pd-form="daily"><label>今天最重要的研究问题</label><textarea name="priority" rows="2" maxlength="1200" placeholder="今天必须推进的一件事">'+E(note.priority||"")+'</textarea><label>最小行动</label><textarea name="minimum" rows="2" maxlength="1200" placeholder="可以完成、可以验证的下一步">'+E(note.minimum||"")+'</textarea><label>回顾与校准</label><textarea name="reflection" rows="2" maxlength="1200" placeholder="哪些假设被证实，哪些需要改变？">'+E(note.reflection||"")+'</textarea><button class="pd-primary" type="submit">保存今日方向</button></form></section>',
  '<section class="pd-panel"><div class="pd-heading"><h3>任务四象限</h3><span>重要 × 紧急</span></div><form class="pd-task-form" data-pd-form="task"><input name="title" required maxlength="250" placeholder="新增一项可执行任务"/><select name="projectId">'+choices()+'</select><select name="quadrant">'+QUADS.map(q=>'<option value="'+q[0]+'">'+q[0]+' '+q[1]+'</option>').join("")+'</select><input name="due" type="date" title="截止日期"/><button class="pd-primary">添加</button></form><div class="pd-matrix">'+matrix+'</div></section></div>',
@@ -68,7 +68,7 @@ export function renderProjectDay(root,api){
  root.onclick=e=>{
   const button=e.target.closest("[data-pd-act]");if(!button||!root.contains(button))return;
   const act=button.dataset.pdAct,key=button.dataset.id;
-  if(act==="idea-kind"){kind=button.dataset.kind;redraw();return;}
+  if(act==="idea-kind"){kind=button.dataset.pdKind;redraw();return;}
   if(act==="prev-week"||act==="next-week"){weekOffset+=act==="prev-week"?-1:1;redraw();return;}
   if(["remove-task","remove-idea","remove-session","remove-project"].includes(act)){
    if(!confirm("确定删除这条记录吗？"))return;
