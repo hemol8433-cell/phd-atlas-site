@@ -146,7 +146,15 @@ function renderModule(){
  body='<div class="module-layout"><div class="content-grid"><h3>研究问题与待验证假设</h3>'+notesFor('问题')+'</div><aside class="panel"><h3>记录一个值得解决的问题</h3>'+entryForm('问题','观察到了什么？\n可能原因是什么？\n怎样设计一次最小验证？')+'<p class="memo">示例：PerTime 的收益来自时间尺度重加权，还是标准化后的函数表示更简单？</p></aside></div>';
  }else if(view==='literature'){
  const arr=papers.slice(0,10);
- body='<div class="module-layout"><div class="content-grid"><section class="panel"><h3>近期论文数据</h3><p class="small muted">自动检索是关键词初筛，不等同于已核验全文或 AI 精读。</p><div class="content-grid">'+(arr.length?arr.map(p=>'<a class="row-card" href="'+safe(p.url||'https://arxiv.org')+'" target="_blank" rel="noopener noreferrer"><h3>'+safe(p.title||'Untitled')+'</h3><p>'+safe(p.published||'日期未核实')+' · '+safe(p.category||'PINN')+' · arXiv ↗</p></a>').join(''):'<p class="empty">正在尝试加载论文数据，或暂无数据。</p>')+'</div></section></div><aside class="panel"><h3>读完论文，留下一个判断</h3>'+entryForm('文献','论文标题与链接：\n解决的问题：\n真正创新点：\n与我的研究区别：\n值得复现的实验：')+'</aside></div>';
+ const allowedLink=url=>/^https?:\/\//i.test(String(url||''))?String(url):'';
+ const renderPaper=p=>{
+   const link=allowedLink(p.url||p.link),pdf=allowedLink(p.pdf_url||p.pdf);
+   const fluid=p.fluid||p.fluid_relevance||'';
+   const fluidLabel=({direct:'流体直接相关',transfer:'可迁移方法',fallback:'纯流体领域'})[fluid]||fluid;
+   const zh=p.abstract_zh||'';
+   return '<article class="row-card" style="padding:18px;border-color:#e5e9df"><div class="row-head"><h3 style="font-size:14px">'+safe(p.title||'未命名论文')+'</h3>'+(fluidLabel?'<span class="pill">'+safe(fluidLabel)+'</span>':'')+'</div><p>'+safe(p.published||'日期未核实')+' · '+safe(p.category||'待分类')+(p.journal?' · '+safe(p.journal):'')+(p.quartile?' · '+safe(p.quartile):'')+'</p><p style="color:#48634f">'+(zh?safe(zh):'<em>中文摘要尚未同步。新一轮 AI×流体筛选及翻译仍待接通。</em>')+'</p><div class="row" style="gap:10px;flex-wrap:wrap">'+(link?'<a href="'+safe(link)+'" target="_blank" rel="noopener noreferrer" class="text-btn">论文来源 ↗</a>':'')+(pdf?'<a href="'+safe(pdf)+'" target="_blank" rel="noopener noreferrer" class="text-btn">PDF ↗</a>':'')+'</div></article>';
+ };
+ body='<div class="module-layout"><div class="content-grid"><section class="panel"><div class="row-head"><h3>AI × 流体 · 论文日报</h3><span class="panel-caption">私人文献库</span></div><p class="small muted">当前展示已入库的数据。新版 arXiv / Crossref / OpenAlex 双重筛选和逐篇中文摘要翻译尚未连接 WorkBuddy 脚本，不能将现有记录视为今日的 10 篇推荐。</p><div class="content-grid">'+(arr.length?arr.map(renderPaper).join(''):'<p class="empty">尚无已同步论文。待完成私人数据源连接。</p>')+'</div></section></div><aside class="panel"><h3>读完论文，留下一个判断</h3>'+entryForm('文献','论文标题与链接：\\n解决的问题：\\n真正创新点：\\n与我的研究区别：\\n值得复现的实验：')+'</aside></div>';
  }else if(view==='writing'){
  body='<div class="module-layout"><div class="content-grid"><section class="panel"><h3>文章章节进度</h3><div class="track-list">'+db.writing.map((x,i)=>'<div class="track"><span class="track-number">'+(i+1)+'</span><div class="track-text"><strong>'+safe(x.title)+'</strong><p>'+safe(x.detail)+'</p></div>'+statusSelect('writing',x.id,x.status)+'</div>').join('')+'</div></section><h3>写作日志</h3>'+notesFor('写作')+'</div><aside class="panel"><h3>记录写作进展</h3>'+entryForm('写作','今天完成的章节、图表或推导：\n反馈与修改：\n下一步需要解决的论证问题：')+'</aside></div>';
  }else if(view==='growth'){
