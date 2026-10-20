@@ -8,7 +8,7 @@ const E=x=>String(x==null?"":x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;","
 const duration=seconds=>Number(seconds)>=3600?(Number(seconds)/3600).toFixed(1)+" 小时":Math.round((Number(seconds)||0)/60)+" 分钟";
 const statusList=["计划中","进行中","已完成","暂缓"];
 export function normalizeProjectDay(x){
- const d={projects:[],tasks:[],sessions:[],ideas:[],daily:{},timer:{startedAt:null,elapsedMs:0,projectId:""}};
+ const d={projects:[],tasks:[],sessions:[],ideas:[],daily:{},timer:{startedAt:null,elapsedMs:0,projectId:"",segments:[]}};
  if(!x||typeof x!=="object")return d;
  for(const k of ["projects","tasks","sessions","ideas"])if(Array.isArray(x[k]))d[k]=x[k].slice(0,3000);
  if(x.daily&&typeof x.daily==="object"&&!Array.isArray(x.daily))d.daily=x.daily;
@@ -16,6 +16,7 @@ export function normalizeProjectDay(x){
   d.timer.elapsedMs=Math.max(0,Number(x.timer.elapsedMs)||0);
   d.timer.startedAt=typeof x.timer.startedAt==="number"?x.timer.startedAt:null;
   d.timer.projectId=String(x.timer.projectId||"");
+  d.timer.segments=Array.isArray(x.timer.segments)?x.timer.segments.slice(0,3000):[];
  }
  return d;
 }
@@ -27,6 +28,11 @@ export function renderProjectDay(root,api){
  const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
  const weekBegin=iso(monday);const sunday=new Date(monday);sunday.setDate(sunday.getDate()+6);const weekEnd=iso(sunday);
  const getProject=p=>s.projects.find(x=>x.id===p);
+ const activity=(activityId,title,note="")=>{
+   if(!Array.isArray(data.activityEvents))data.activityEvents=[];
+   data.activityEvents.push({id:activityId,at:new Date().toISOString(),category:"科研",source:"projectday",title,note});
+   data.activityEvents=data.activityEvents.slice(-5000);
+ };
  const pname=p=>getProject(p)?.title||"未分类";
  const taskCount=s.tasks.filter(x=>x.done).length;
  const secToday=s.sessions.filter(x=>x.date===today).reduce((n,x)=>n+(Number(x.seconds)||0),0);
@@ -57,7 +63,7 @@ export function renderProjectDay(root,api){
  '<section class="pd-panel"><div class="pd-heading"><h3>任务四象限</h3><span>重要 × 紧急</span></div><form class="pd-task-form" data-pd-form="task"><input name="title" required maxlength="250" placeholder="新增一项可执行任务"/><select name="projectId">'+choices()+'</select><select name="quadrant">'+QUADS.map(q=>'<option value="'+q[0]+'">'+q[0]+' '+q[1]+'</option>').join("")+'</select><input name="due" type="date" title="截止日期"/><button class="pd-primary">添加</button></form><div class="pd-matrix">'+matrix+'</div></section></div>',
  '<div class="pd-title-line"><div><span class="pd-number">03</span><h3>项目与投入</h3><small>进度、任务和真实时间放在一起</small></div></div>',
  '<div class="pd-project-grid"><section class="pd-panel"><div class="pd-heading"><h3>研究项目</h3><span>'+s.projects.length+' 个项目</span></div><form class="pd-form pd-project-form" data-pd-form="project"><input name="title" required maxlength="120" placeholder="项目名称"/><select name="category">'+CATS.map(x=>'<option>'+x+'</option>').join("")+'</select><input name="due" type="date" title="目标日期"/><textarea name="description" rows="2" maxlength="600" placeholder="研究目标 / 可验证结果（可选）"></textarea><button class="pd-primary">＋ 创建项目</button></form><div class="pd-projects">'+(projects||'<p class="pd-empty">目前没有项目，先创建第一条研究主线。</p>')+'</div></section>',
- '<section class="pd-panel"><div class="pd-heading"><h3>专注计时</h3><span>可以暂停、保存或补记</span></div><div class="pd-timer"><small>本次专注</small><b id="pd-clock">'+clock()+'</b><select id="pd-timer-project" data-pd-change="timer-project">'+choices(s.timer.projectId)+'</select><div class="pd-controls"><button type="button" class="pd-primary" data-pd-act="timer-toggle"'+(s.projects.length?"":" disabled")+'>'+(s.timer.startedAt?"暂停":"开始")+'</button><button type="button" data-pd-act="timer-save">保存时段</button><button type="button" data-pd-act="timer-clear">清零</button></div></div><form class="pd-form pd-manual" data-pd-form="session"><label>补记实际投入时间</label><select name="projectId" required>'+choices()+'</select><input name="minutes" type="number" min="1" max="1440" required placeholder="分钟"/><input name="date" type="date" value="'+today+'" required/><input name="note" maxlength="250" placeholder="本次做了什么？"/><button type="submit">补记并保存</button></form></section></div>',
+ '<section class="pd-panel"><div class="pd-heading"><h3>专注计时</h3><span>可以暂停、保存或补记</span></div><div class="pd-timer"><small>本次专注</small><b id="pd-clock">'+clock()+'</b><select id="pd-timer-project" data-pd-change="timer-project">'+choices(s.timer.projectId)+'</select><div class="pd-controls"><button type="button" class="pd-primary" data-pd-act="timer-toggle"'+(s.projects.length?"":" disabled")+'>'+(s.timer.startedAt?"暂停":"开始")+'</button><button type="button" data-pd-act="timer-save">保存时段</button><button type="button" data-pd-act="timer-clear">清零</button></div></div><form class="pd-form pd-manual" data-pd-form="session"><label>补记实际投入时间</label><select name="projectId" required>'+choices()+'</select><input name="minutes" type="number" min="1" max="1440" required placeholder="分钟"/><input name="date" type="date" value="'+today+'" required/><input name="startTime" type="time" title="开始时间（可选；有具体时间才写入周表时间段）"/><input name="note" maxlength="250" placeholder="本次做了什么？"/><button type="submit">补记并保存</button></form></section></div>',
  '<div class="pd-bottom-grid"><section class="pd-panel"><div class="pd-heading"><h3>04 · 执行日志</h3><span>按实际投入积累</span></div>'+(log||'<p class="pd-empty">完成一次专注或补记时间后，记录会出现在这里。</p>')+'</section><section class="pd-panel"><div class="pd-heading"><h3>05 · 灵感与成长</h3><span>连接每一天的思考</span></div>'+(ideas||'<p class="pd-empty">这里会保存你的灵感、情绪和方法心得。</p>')+'</section></div>',
  '<p class="pd-privacy">🔒 仅你登录后可查看。项目、任务、投入和灵感会同步到受保护的 Supabase 记录中，建议定期导出备份。</p>'
  ].join("");
@@ -75,25 +81,35 @@ export function renderProjectDay(root,api){
    const group=act.replace("remove-",""),field=({task:"tasks",idea:"ideas",session:"sessions",project:"projects"})[group];
    if(!field)return;
    s[field]=s[field].filter(x=>x.id!==key);
-   if(field==="projects"&&s.timer.projectId===key){s.timer.startedAt=null;s.timer.elapsedMs=0;s.timer.projectId="";}
+   if(field==="projects"&&s.timer.projectId===key){s.timer.startedAt=null;s.timer.elapsedMs=0;s.timer.segments=[];s.timer.projectId="";}
    persist();redraw();return;
   }
   if(act==="timer-toggle"){
    if(!getProject(s.timer.projectId)){api.toast("先选择一个项目");return;}
-   if(s.timer.startedAt){s.timer.elapsedMs=secTimer();s.timer.startedAt=null;}
-   else s.timer.startedAt=Date.now();
+   if(s.timer.startedAt){
+     const end=Date.now();
+     s.timer.segments.push({start:s.timer.startedAt,end});
+     s.timer.elapsedMs+=Math.max(0,end-s.timer.startedAt);
+     s.timer.startedAt=null;
+   }else s.timer.startedAt=Date.now();
    persist();redraw();return;
   }
   if(act==="timer-clear"){
    if(secTimer()>0&&!confirm("确定清空尚未保存的计时？"))return;
-   s.timer.elapsedMs=0;s.timer.startedAt=null;persist();redraw();return;
+   s.timer.elapsedMs=0;s.timer.startedAt=null;s.timer.segments=[];persist();redraw();return;
   }
   if(act==="timer-save"){
    const seconds=Math.floor(secTimer()/1000);
    if(!getProject(s.timer.projectId)){api.toast("请选择项目");return;}
    if(seconds<10){api.toast("至少记录十秒后才能保存");return;}
-   s.sessions.push({id:ID(),projectId:s.timer.projectId,date:NOW(),seconds,note:"专注时段"});
-   s.timer.elapsedMs=0;s.timer.startedAt=null;persist();redraw();
+   if(s.timer.startedAt){
+     const end=Date.now();
+     s.timer.segments.push({start:s.timer.startedAt,end});
+     s.timer.elapsedMs+=Math.max(0,end-s.timer.startedAt);
+     s.timer.startedAt=null;
+   }
+   s.sessions.push({id:ID(),projectId:s.timer.projectId,date:NOW(),seconds,note:"专注时段",segments:s.timer.segments.slice()});
+   s.timer.elapsedMs=0;s.timer.startedAt=null;s.timer.segments=[];persist();redraw();
   }
  };
  root.onchange=e=>{
@@ -108,7 +124,7 @@ export function renderProjectDay(root,api){
   }
   if(act==="task-done"){
    const task=s.tasks.find(t=>t.id===el.dataset.id);
-   if(task){task.done=el.checked;persist();redraw();}
+   if(task){task.done=el.checked;if(el.checked)activity("research-task:"+task.id+":"+ID(),"完成科研任务",task.title);persist();redraw();}
   }
  };
  root.onsubmit=e=>{
@@ -124,15 +140,25 @@ export function renderProjectDay(root,api){
    s.tasks.push({id:ID(),title:value("title").slice(0,250),projectId:value("projectId"),quadrant:value("quadrant"),due:value("due"),done:false});
   }else if(which==="idea"){
    if(!value("text"))return;
-   s.ideas.push({id:ID(),type:kind,text:value("text").slice(0,2500),date:NOW()});
+   const idea={id:ID(),type:kind,text:value("text").slice(0,2500),date:NOW()};s.ideas.push(idea);activity("research-idea:"+idea.id,"记录科研"+kind,idea.text.slice(0,100));
   }else if(which==="daily"){
    s.daily[NOW()]={priority:value("priority").slice(0,1200),minimum:value("minimum").slice(0,1200),reflection:value("reflection").slice(0,1200)};
+   activity("research-review:"+ID(),"科研每日重点 / 复盘",s.daily[NOW()].reflection||s.daily[NOW()].priority);
   }else if(which==="session"){
    const minutes=Math.floor(Number(value("minutes")));
    if(!Number.isFinite(minutes)||minutes<1||minutes>1440){api.toast("时间请输入 1 至 1440 分钟");return;}
    if(!getProject(value("projectId"))){api.toast("请选择项目");return;}
    if(!/^\d{4}-\d{2}-\d{2}$/.test(value("date"))){api.toast("请输入有效日期");return;}
-   s.sessions.push({id:ID(),projectId:value("projectId"),date:value("date"),seconds:minutes*60,note:value("note").slice(0,250)||"时间补记"});
+   const startTime=value("startTime");
+   let endTime="";
+   if(startTime){
+     const m=/^([01]\d|2[0-3]):([0-5]\d)$/.exec(startTime);
+     if(!m){api.toast("开始时间格式错误");return;}
+     const t=Number(m[1])*60+Number(m[2])+minutes;
+     if(t>1440){api.toast("时间段不能跨越午夜，请拆成两条补记");return;}
+     endTime=String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0");
+   }
+   s.sessions.push({id:ID(),projectId:value("projectId"),date:value("date"),seconds:minutes*60,startTime,endTime,note:value("note").slice(0,250)||"时间补记"});
   }else return;
   persist();redraw();
  };
