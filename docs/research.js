@@ -31,7 +31,9 @@ const defaultState=()=>({version:1,created:TODAY,year:2,entries:[],tasks:[],revi
 function load(){try{
  const saved=window.__phdWorkspaceDocument || null;
  if(!saved||saved.version!==1) return defaultState();
- const base=defaultState();if(saved.projectday && typeof saved.projectday==='object' && !Array.isArray(saved.projectday))base.projectday=saved.projectday;for(const k of ['entries','tasks','achievements'])if(Array.isArray(saved[k]))base[k]=saved[k].slice(0,5000);
+ const base=defaultState();if(saved.projectday && typeof saved.projectday==='object' && !Array.isArray(saved.projectday))base.projectday=saved.projectday;
+ if(saved.life && typeof saved.life==='object' && !Array.isArray(saved.life))base.life=saved.life;
+ if(Array.isArray(saved.vaultFiles))base.vaultFiles=saved.vaultFiles.slice(0,5000);for(const k of ['entries','tasks','achievements'])if(Array.isArray(saved[k]))base[k]=saved[k].slice(0,5000);
  if(saved.reviews&&typeof saved.reviews==='object'&&!Array.isArray(saved.reviews))base.reviews=saved.reviews;
  for(const k of ['tracks','milestones','writing'])if(Array.isArray(saved[k]))base[k]=base[k].map(x=>({...x,...(saved[k].find(v=>v&&v.id===x.id)||{})}));
  if(Number.isInteger(saved.year)&&saved.year>=1&&saved.year<=10)base.year=saved.year;
@@ -88,6 +90,8 @@ function renderDay(){
 }
 function renderModules(){const modules=[
  ['projectday','▥','科研执行中心','项目 · 四象限 · 专注','blue'],
+ ['life','♡','生活空间','习惯 · 心情 · 日记','green'],
+ ['vault','▣','我的资料库','图片 · PDF · 文档','amber'],
  ['experiments','▤','实验日志','算例 · 方法 · 结果','blue'],
  ['questions','◇','研究问题','假设 · 困惑 · 复现','purple'],
  ['literature','▦','文献雷达','PaperFlow · 每日推荐','green'],
@@ -137,10 +141,12 @@ function appendTask(title,due){
  save();render();toast('已加入科研待办');
 }
 function controls(){
- return '<nav class="navstrip" aria-label="页面导航"><button data-view="dashboard"'+(view==='dashboard'?' class="active"':'')+'>⌂ 成长首页</button><button data-view="projectday"'+(view==='projectday'?' class="active"':'')+'>▥ 科研执行</button><button data-view="experiments"'+(view==='experiments'?' class="active"':'')+'>实验</button><button data-view="literature"'+(view==='literature'?' class="active"':'')+'>文献</button><button data-view="review"'+(view==='review'?' class="active"':'')+'>周复盘</button><button data-view="milestones"'+(view==='milestones'?' class="active"':'')+'>博士路线图</button><button data-view="settings"'+(view==='settings'?' class="active"':'')+'>备份与设置</button></nav>'
+ return '<nav class="navstrip" aria-label="页面导航"><button data-view="dashboard"'+(view==='dashboard'?' class="active"':'')+'>⌂ 成长首页</button><button data-view="projectday"'+(view==='projectday'?' class="active"':'')+'>▥ 科研执行</button><button data-view="life"'+(view==='life'?' class="active"':'')+'>♡ 生活</button><button data-view="vault"'+(view==='vault'?' class="active"':'')+'>▣ 资料库</button><button data-view="experiments"'+(view==='experiments'?' class="active"':'')+'>实验</button><button data-view="literature"'+(view==='literature'?' class="active"':'')+'>文献</button><button data-view="review"'+(view==='review'?' class="active"':'')+'>周复盘</button><button data-view="milestones"'+(view==='milestones'?' class="active"':'')+'>博士路线图</button><button data-view="settings"'+(view==='settings'?' class="active"':'')+'>备份与设置</button></nav>'
 }
 const meta={
  projectday:['科研执行中心','项目进度、任务优先级、专注投入和每日复盘。'],
+ life:['生活空间','在科研之外，也记录自己的日常节奏、习惯、心情和生活计划。'],
+ vault:['私人资料库','图片、文档、PDF 和研究材料保存在受保护的云端，支持跨设备读取。'],
  experiments:['实验日志','每次实验的目的、变量、结果、失败原因和下一步都值得追踪。'],
  questions:['研究问题库','把灵感变成假设，把卡住的地方变成可验证的问题。'],
  literature:['文献雷达','保留原 PaperFlow，每日发现与收藏仍然可以使用。'],
@@ -158,6 +164,21 @@ function notesFor(k){
 function entryForm(k,prompt){return '<form class="form-stack" data-form="module-entry" data-kind="'+k+'"><label>记录时间</label><input name="date" type="date" value="'+selected+'" required/><label>记录内容</label><textarea name="text" required maxlength="12000" placeholder="'+safe(prompt)+'"></textarea><button type="submit">保存到我的科研日志</button></form>'}
 function renderModule(){
  const el=$('moduleContent');
+ if(view==='life' || view==='vault'){
+   el.innerHTML='<section class="panel"><h3>正在加载私人空间…</h3></section>';
+   const isLife=view==='life';
+   const key=isLife?'__lifeLoader':'__vaultLoader';
+   if(!window[key])window[key]=import(isLife?'./life.js?v=20261020-l1':'./vault.js?v=20261020-v1');
+   window[key].then(mod=>{
+     if(view!==(isLife?'life':'vault'))return;
+     const api={data:()=>db,save,toast,session};
+     if(isLife)mod.renderLife(el,api);else mod.renderVault(el,api);
+   }).catch(error=>{
+     console.error('Personal module failed',error);
+     if(view===(isLife?'life':'vault'))el.innerHTML='<section class="panel"><h3>模块暂时无法加载</h3><p>请刷新页面重试。</p></section>';
+   });
+   return;
+ }
  if(view==='projectday'){
    el.innerHTML='<section class="panel"><h3>正在加载科研执行中心…</h3></section>';
    if(!window.__projectDayLoader)window.__projectDayLoader=import("./projectday.js?v=20261020-pd1");
@@ -191,7 +212,7 @@ function renderModule(){
  }else if(view==='outcomes'){
  body='<div class="module-layout"><div class="content-grid"><h3>我的成果时间线</h3>'+(db.achievements.length?[...db.achievements].sort((a,b)=>b.date.localeCompare(a.date)).map(a=>'<div class="row-card"><div class="row-head"><h3>'+safe(a.title)+'</h3><button class="text-btn" data-act="delete-outcome" data-id="'+safe(a.id)+'">删除</button></div><p>'+safe(a.date)+' · '+safe(a.kind)+'</p><p style="white-space:pre-wrap;color:#43536d">'+safe(a.detail||'')+'</p></div>').join(''):'<div class="row-card empty">这里将逐步积累论文、报告、代码、重大发现和科研中的第一次。</div>')+'</div><aside class="panel"><h3>记录一项成果</h3><form class="form-stack" id="outcomeForm"><label>成果名称</label><input name="title" required maxlength="200" placeholder="例如：完成一组关键对照实验"/><label>类别</label><select name="kind"><option>研究突破</option><option>论文与投稿</option><option>代码与数据</option><option>报告与交流</option><option>技能成长</option></select><label>日期</label><input name="date" type="date" value="'+TODAY+'" required/><label>记录意义</label><textarea name="detail" maxlength="8000" placeholder="这件事为什么重要？有哪些可复用的收获？"></textarea><button type="submit">收藏到成长档案</button></form></aside></div>';
  }else if(view==='settings'){
- body='<div class="module-layout"><section class="panel"><h3>数据只存储在当前浏览器</h3><p>科研日志、计划、个人复盘和成果记录会保存到受身份验证和数据库访问规则保护的云端。切换设备后，使用相同 GitHub 账号登录即可访问。建议另外保留导出备份。</p><div class="form-stack"><label>当前博士阶段</label><select id="yearSelect">'+Array.from({length:9},(_,i)=>'<option value="'+(i+1)+'"'+(db.year===i+1?' selected':'')+'>博士第 '+(i+1)+' 年</option>').join('')+'</select><label>备份全部数据</label><button data-act="export" type="button">↓ 导出成长记录 JSON</button><label>从备份文件恢复</label><input id="importBackup" type="file" accept=".json,application/json"/><label>清除所有本地成长记录</label><button data-act="clear" type="button" style="background:#fff0f1;color:#a43f51;border:1px solid #f0d7dc">清空本机数据（需二次确认）</button></div></section><aside class="panel"><h3>隐私与公开网站</h3><p>公开的只是登录界面。未经身份验证和数据库授权，访客不能通过数据接口读取你的研究内容。网站源码不能存储任何未公开实验结果、API 私钥或私人文献。</p><div class="memo">当前版本仅包含私人科研工作台与私人文献列表；旧版 PaperFlow 的浏览器本地收藏暂未自动迁移，请保留旧版备份。</div><button class="big-link" type="button" data-view="literature">前往私人文献雷达 ↗</button></aside></div>';
+ body='<div class="module-layout"><section class="panel"><h3>数据只存储在当前浏览器</h3><p>科研和生活记录保存在 Supabase 私人数据库，私人文档保存在非公开 Storage。换设备后使用同一 GitHub 账号可继续访问已同步的记录；旧版浏览器本地的 PaperFlow 收藏和笔记仍需要单独迁移。请定期导出备份。</p><div class="form-stack"><label>当前博士阶段</label><select id="yearSelect">'+Array.from({length:9},(_,i)=>'<option value="'+(i+1)+'"'+(db.year===i+1?' selected':'')+'>博士第 '+(i+1)+' 年</option>').join('')+'</select><label>备份全部数据</label><button data-act="export" type="button">↓ 导出成长记录 JSON</button><label>从备份文件恢复</label><input id="importBackup" type="file" accept=".json,application/json"/><label>清除所有本地成长记录</label><button data-act="clear" type="button" style="background:#fff0f1;color:#a43f51;border:1px solid #f0d7dc">清空本机数据（需二次确认）</button></div></section><aside class="panel"><h3>隐私与公开网站</h3><p>公开的只是登录界面。未经身份验证和数据库授权，访客不能通过数据接口读取你的研究内容。网站源码不能存储任何未公开实验结果、API 私钥或私人文献。</p><div class="memo">数据库资料可跨设备访问，但上传文件不包含在 JSON 备份内。如需离线备份，请分别下载重要文档。旧版 PaperFlow 的浏览器本地收藏尚未自动迁移。</div><button class="big-link" type="button" data-view="literature">前往私人文献雷达 ↗</button></aside></div>';
  }
  el.innerHTML='<div class="view-hero"><span class="pill blue">PhD · Year '+db.year+'</span><h2>'+h[0]+'</h2><p>'+h[1]+'</p></div>'+body;
 }
