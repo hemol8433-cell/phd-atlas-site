@@ -32,6 +32,8 @@ jobs:
         run: node tests/daybook.mjs
       - name: Test seven-day synchronized schedule
         run: node tests/weekboard.mjs
+      - name: Verify focus and life check-in synchronization
+        run: node tests/focus-sync.mjs
       - name: Validate public/private file boundary
         run: |
           python - <<'PY'
