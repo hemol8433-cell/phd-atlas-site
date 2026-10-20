@@ -27,7 +27,7 @@ const writingDefault=[
  {id:'results',title:'Experiments & Results',detail:'四种预处理与正反例分析',status:'计划中'},
  {id:'discussion',title:'Discussion & Limitations',detail:'适用条件、失效场景、敏感性',status:'计划中'}
 ];
-const defaultState=()=>({version:1,created:TODAY,year:2,entries:[],tasks:[],reviews:{},achievements:[],tracks:topics.map(x=>({...x})),milestones:chapterDefault.map(x=>({...x})),writing:writingDefault.map(x=>({...x})),daybook:[],activityEvents:[]});
+const defaultState=()=>({version:1,created:TODAY,year:2,entries:[],tasks:[],reviews:{},achievements:[],tracks:topics.map(x=>({...x})),milestones:[],writing:writingDefault.map(x=>({...x})),daybook:[],activityEvents:[]});
 function load(){try{
  const saved=window.__phdWorkspaceDocument || null;
  if(!saved||saved.version!==1) return defaultState();
@@ -35,7 +35,8 @@ function load(){try{
  if(saved.life && typeof saved.life==='object' && !Array.isArray(saved.life))base.life=saved.life;
  if(Array.isArray(saved.vaultFiles))base.vaultFiles=saved.vaultFiles.slice(0,5000);for(const k of ['entries','tasks','achievements'])if(Array.isArray(saved[k]))base[k]=saved[k].slice(0,5000);
  if(saved.reviews&&typeof saved.reviews==='object'&&!Array.isArray(saved.reviews))base.reviews=saved.reviews;
- for(const k of ['tracks','milestones','writing'])if(Array.isArray(saved[k]))base[k]=base[k].map(x=>({...x,...(saved[k].find(v=>v&&v.id===x.id)||{})}));
+ if(Array.isArray(saved.milestones))base.milestones=saved.milestones.filter(x=>x && typeof x.id==='string' && typeof x.title==='string').slice(0,2000).map(x=>({...x}));
+ for(const k of ['tracks','writing'])if(Array.isArray(saved[k]))base[k]=base[k].map(x=>({...x,...(saved[k].find(v=>v&&v.id===x.id)||{})}));
  if(Number.isInteger(saved.year)&&saved.year>=1&&saved.year<=10)base.year=saved.year;
  return base;
  }catch(e){return defaultState()}}
@@ -88,7 +89,7 @@ function addEntry(textValue,kindValue,dateValue){
  save();return true;
 }
 function controls(){
- return '<nav class="navstrip" aria-label="页面导航"><button data-view="dashboard"'+(view==='dashboard'?' class="active"':'')+'>⌂ 首页</button><button data-view="projectday"'+(view==='projectday'?' class="active"':'')+'>▥ 科研执行</button><button data-view="life"'+(view==='life'?' class="active"':'')+'>♡ 生活</button><button data-view="vault"'+(view==='vault'?' class="active"':'')+'>▣ 资料库</button><button data-view="experiments"'+(view==='experiments'?' class="active"':'')+'>实验</button><button data-view="literature"'+(view==='literature'?' class="active"':'')+'>文献</button><button data-view="review"'+(view==='review'?' class="active"':'')+'>周复盘</button><button data-view="milestones"'+(view==='milestones'?' class="active"':'')+'>博士路线图</button><button data-view="settings"'+(view==='settings'?' class="active"':'')+'>备份与设置</button></nav>'
+ return '<nav class="navstrip" aria-label="页面导航"><button data-view="dashboard"'+(view==='dashboard'?' class="active"':'')+'>⌂ 首页</button><button data-view="projectday"'+(view==='projectday'?' class="active"':'')+'>▥ 科研执行</button><button data-view="life"'+(view==='life'?' class="active"':'')+'>♡ 生活</button><button data-view="vault"'+(view==='vault'?' class="active"':'')+'>▣ 资料库</button><button data-view="experiments"'+(view==='experiments'?' class="active"':'')+'>实验</button><button data-view="literature"'+(view==='literature'?' class="active"':'')+'>文献</button><button data-view="review"'+(view==='review'?' class="active"':'')+'>周复盘</button><button data-view="milestones"'+(view==='milestones'?' class="active"':'')+'>成长里程碑</button><button data-view="settings"'+(view==='settings'?' class="active"':'')+'>备份与设置</button></nav>'
 }
 const meta={
  projectday:['科研执行中心','项目进度、任务优先级、专注投入和每日复盘。'],
@@ -99,7 +100,7 @@ const meta={
  literature:['AI × 流体文献','每日推荐与中文摘要、论文筛选、阅读记录。'],
  writing:['论文写作','每次修改、一次推导、一张结果图，都是论文进度。'],
  growth:['技能与成长','这里记录学会的工具、科研方法与心态变化。'],
- milestones:['博士路线图','关注实际成长与研究成熟度，而不是机械地数毕业倒计时。'],
+ milestones:['成长里程碑','科研、生活和个人成长的目标都由你自由添加、修改与完成。'],
  review:['每周复盘','每周回顾一次：做成了什么、卡在何处、下一步是什么。'],
  outcomes:['成果档案','成果不仅是论文，也可以是可复现代码、学术报告和重要突破。'],
  settings:['隐私与数据管理','科研成长记录保存在私人云端，请定期导出备份。']
@@ -111,6 +112,18 @@ function notesFor(k){
 function entryForm(k,prompt){return '<form class="form-stack" data-form="module-entry" data-kind="'+k+'"><label>记录时间</label><input name="date" type="date" value="'+selected+'" required/><label>记录内容</label><textarea name="text" required maxlength="12000" placeholder="'+safe(prompt)+'"></textarea><button type="submit">保存到我的科研日志</button></form>'}
 function renderModule(){
  const el=$('moduleContent');
+ if(view==='milestones'){
+   el.innerHTML='<div class="panel">正在加载个人里程碑…</div>';
+   if(!window.__milestoneLoader)window.__milestoneLoader=import("./milestones.js?v=20261020-m1");
+   window.__milestoneLoader.then(mod=>{
+     if(view==='milestones')mod.renderMilestones(el,{data:()=>db,save,toast});
+   }).catch(error=>{
+     console.error('Milestones failed to load',error);
+     if(view==='milestones')el.innerHTML='<div class="panel">里程碑加载失败，请刷新页面重试。</div>';
+   });
+   return;
+ }
+
  if(view==='life' || view==='vault'){
    el.innerHTML='<section class="panel"><h3>正在加载私人空间…</h3></section>';
    const isLife=view==='life';
@@ -159,8 +172,6 @@ function renderModule(){
  body='<div class="module-layout"><div class="content-grid"><section class="panel"><h3>文章章节进度</h3><div class="track-list">'+db.writing.map((x,i)=>'<div class="track"><span class="track-number">'+(i+1)+'</span><div class="track-text"><strong>'+safe(x.title)+'</strong><p>'+safe(x.detail)+'</p></div>'+statusSelect('writing',x.id,x.status)+'</div>').join('')+'</div></section><h3>写作日志</h3>'+notesFor('写作')+'</div><aside class="panel"><h3>记录写作进展</h3>'+entryForm('写作','今天完成的章节、图表或推导：\n反馈与修改：\n下一步需要解决的论证问题：')+'</aside></div>';
  }else if(view==='growth'){
  body='<div class="module-layout"><div class="content-grid"><section class="panel"><h3>成长档案 · 博士第 '+db.year+' 年</h3><p>这里不只统计发表成果，更关注你逐渐获得的独立研究能力：发现问题、设计验证、判断结果、表达贡献、面对失败。</p></section>'+notesFor('成长')+'</div><aside class="panel"><h3>记录今天的学习与成长</h3>'+entryForm('成长','今天学会了什么？\n从失败中发现了什么？\n对科研的理解发生了什么变化？')+'</aside></div>';
- }else if(view==='milestones'){
- body='<div class="module-layout"><div class="content-grid"><section class="panel"><h3>博士成长里程碑</h3><p class="small muted">以下是可编辑的成长路线，不预设毕业年份或完成期限。</p>'+db.milestones.map((x,i)=>'<div class="milestone"><div class="milestone-rail">'+(i+1)+'</div><div class="milestone-body"><div class="row-head"><strong>'+safe(x.title)+'</strong>'+statusSelect('milestones',x.id,x.status)+'</div><p>'+safe(x.detail)+'</p></div></div>').join('')+'</section></div><aside class="panel"><h3>阶段说明</h3><p>现在是博士第 '+db.year+' 年。你可以在“备份与设置”中调整年级。研究和成长不是线性推进的，暂缓、返工和问题重构都应被记录。</p><div class="memo">里程碑状态保存在此浏览器中，不会自动提交到 GitHub。</div></aside></div>';
  }else if(view==='review'){
  const key=getWeek(),end=addDays(key,6),r=db.reviews[key]||{};
  body='<div class="module-layout"><section class="panel"><div class="row-head"><h3>周复盘 · '+labelDate(key)+' — '+labelDate(end)+'</h3><div class="week-switcher"><button class="circle-btn" data-act="prev-week">‹</button><button class="circle-btn" data-act="next-week">›</button></div></div><form class="form-stack review-grid" id="reviewForm"><label>这一周最有价值的进展是什么？</label><textarea name="progress" placeholder="具体到实验、结论、可复现输出……">'+safe(r.progress||'')+'</textarea><label>遇到了什么困难？有哪些问题仍未解决？</label><textarea name="blocker" placeholder="困惑、失败案例、代码问题、研究方向上的犹豫……">'+safe(r.blocker||'')+'</textarea><label>下周最重要的三件事是什么？</label><textarea name="next" placeholder="可执行、可检查，而不是宽泛目标……">'+safe(r.next||'')+'</textarea><label>写给一周后的自己</label><textarea name="letter" placeholder="我希望记住什么？">'+safe(r.letter||'')+'</textarea><button type="submit">保存这一周的复盘</button></form></section><aside class="panel"><h3>本周研究足迹</h3>'+dayWeekStats(key)+'<div class="memo">周复盘以“周一日期”为索引。切换不同周后可以分别填写和查看。</div></aside></div>';
