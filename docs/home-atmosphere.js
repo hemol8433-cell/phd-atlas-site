@@ -1,4 +1,4 @@
-// Dayflow homepage atmosphere — deterministic daily copy + device-local daypart palette.
+// Suixu homepage atmosphere — deterministic daily copy + device-local daypart palette.
 // No geolocation, browser storage, network calls, or private user data are needed.
 const HEADLINES = [
   "今天，先从一件小事开始。",
@@ -74,7 +74,7 @@ function paint(){
   if(signature===lastSignature)return;
   lastSignature=signature;
   title.textContent=dailyHeadline(now);
-  overline.textContent=part.label+" · DAYFLOW";
+  overline.textContent=part.label+" · SUIXU";
   date.textContent=now.getFullYear()+"年"+(now.getMonth()+1)+"月"+now.getDate()+"日 · 周"+weekLabels[now.getDay()];
   document.body.dataset.daypart=part.name;
   const theme=document.querySelector('meta[name="theme-color"]');
