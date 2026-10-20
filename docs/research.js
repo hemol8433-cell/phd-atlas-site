@@ -27,11 +27,11 @@ const writingDefault=[
  {id:'results',title:'Experiments & Results',detail:'四种预处理与正反例分析',status:'计划中'},
  {id:'discussion',title:'Discussion & Limitations',detail:'适用条件、失效场景、敏感性',status:'计划中'}
 ];
-const defaultState=()=>({version:1,created:TODAY,year:2,entries:[],tasks:[],reviews:{},achievements:[],tracks:topics.map(x=>({...x})),milestones:chapterDefault.map(x=>({...x})),writing:writingDefault.map(x=>({...x})),daybook:[]});
+const defaultState=()=>({version:1,created:TODAY,year:2,entries:[],tasks:[],reviews:{},achievements:[],tracks:topics.map(x=>({...x})),milestones:chapterDefault.map(x=>({...x})),writing:writingDefault.map(x=>({...x})),daybook:[],activityEvents:[]});
 function load(){try{
  const saved=window.__phdWorkspaceDocument || null;
  if(!saved||saved.version!==1) return defaultState();
- const base=defaultState();if(Array.isArray(saved.daybook))base.daybook=saved.daybook.slice(0,5000);if(saved.projectday && typeof saved.projectday==='object' && !Array.isArray(saved.projectday))base.projectday=saved.projectday;
+ const base=defaultState();if(Array.isArray(saved.daybook))base.daybook=saved.daybook.slice(0,5000);if(Array.isArray(saved.activityEvents))base.activityEvents=saved.activityEvents.slice(0,5000);if(saved.projectday && typeof saved.projectday==='object' && !Array.isArray(saved.projectday))base.projectday=saved.projectday;
  if(saved.life && typeof saved.life==='object' && !Array.isArray(saved.life))base.life=saved.life;
  if(Array.isArray(saved.vaultFiles))base.vaultFiles=saved.vaultFiles.slice(0,5000);for(const k of ['entries','tasks','achievements'])if(Array.isArray(saved[k]))base[k]=saved[k].slice(0,5000);
  if(saved.reviews&&typeof saved.reviews==='object'&&!Array.isArray(saved.reviews))base.reviews=saved.reviews;
@@ -71,12 +71,12 @@ function renderDashboard(){
   $('profileYear').textContent='博士第 '+db.year+' 年';
   $('homeGreetingDate').textContent=verboseDate(TODAY);
   const root=$('homeDaybook');
-  if(!window.__daybookLoader)window.__daybookLoader=import("./daybook.js?v=20261020-min1");
-  window.__daybookLoader.then(mod=>{
-    if(view==='dashboard')mod.renderDaybook(root,{data:()=>db,save,toast},{compact:true});
+  if(!window.__weekboardLoader)window.__weekboardLoader=import("./weekboard.js?v=20261020-w1");
+  window.__weekboardLoader.then(mod=>{
+    if(view==='dashboard')mod.renderWeekboard(root,{data:()=>db,save,toast});
   }).catch(error=>{
     console.error('Daybook could not load',error);
-    if(view==='dashboard')root.innerHTML='<p class="empty">今日时间表暂时无法加载，请刷新页面。</p>';
+    if(view==='dashboard')root.innerHTML='<p class="empty">每周时间表暂时无法加载，请刷新页面。</p>';
   });
 }
 function uid(){return Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7)}
@@ -88,10 +88,9 @@ function addEntry(textValue,kindValue,dateValue){
  save();return true;
 }
 function controls(){
- return '<nav class="navstrip" aria-label="页面导航"><button data-view="dashboard"'+(view==='dashboard'?' class="active"':'')+'>⌂ 首页</button><button data-view="schedule"'+(view==='schedule'?' class="active"':'')+'>◷ 时间表</button><button data-view="projectday"'+(view==='projectday'?' class="active"':'')+'>▥ 科研执行</button><button data-view="life"'+(view==='life'?' class="active"':'')+'>♡ 生活</button><button data-view="vault"'+(view==='vault'?' class="active"':'')+'>▣ 资料库</button><button data-view="experiments"'+(view==='experiments'?' class="active"':'')+'>实验</button><button data-view="literature"'+(view==='literature'?' class="active"':'')+'>文献</button><button data-view="review"'+(view==='review'?' class="active"':'')+'>周复盘</button><button data-view="milestones"'+(view==='milestones'?' class="active"':'')+'>博士路线图</button><button data-view="settings"'+(view==='settings'?' class="active"':'')+'>备份与设置</button></nav>'
+ return '<nav class="navstrip" aria-label="页面导航"><button data-view="dashboard"'+(view==='dashboard'?' class="active"':'')+'>⌂ 首页</button><button data-view="projectday"'+(view==='projectday'?' class="active"':'')+'>▥ 科研执行</button><button data-view="life"'+(view==='life'?' class="active"':'')+'>♡ 生活</button><button data-view="vault"'+(view==='vault'?' class="active"':'')+'>▣ 资料库</button><button data-view="experiments"'+(view==='experiments'?' class="active"':'')+'>实验</button><button data-view="literature"'+(view==='literature'?' class="active"':'')+'>文献</button><button data-view="review"'+(view==='review'?' class="active"':'')+'>周复盘</button><button data-view="milestones"'+(view==='milestones'?' class="active"':'')+'>博士路线图</button><button data-view="settings"'+(view==='settings'?' class="active"':'')+'>备份与设置</button></nav>'
 }
 const meta={
- schedule:['每日时间表','科研和生活共用一张时间表，补记每一天几点到几点做了什么。'],
  projectday:['科研执行中心','项目进度、任务优先级、专注投入和每日复盘。'],
  life:['生活空间','在科研之外，也记录自己的日常节奏、习惯、心情和生活计划。'],
  vault:['私人资料库','图片、文档、PDF 和研究材料保存在受保护的云端，支持跨设备读取。'],
@@ -112,18 +111,6 @@ function notesFor(k){
 function entryForm(k,prompt){return '<form class="form-stack" data-form="module-entry" data-kind="'+k+'"><label>记录时间</label><input name="date" type="date" value="'+selected+'" required/><label>记录内容</label><textarea name="text" required maxlength="12000" placeholder="'+safe(prompt)+'"></textarea><button type="submit">保存到我的科研日志</button></form>'}
 function renderModule(){
  const el=$('moduleContent');
- if(view==='schedule'){
-   el.innerHTML='<div class="db-standalone"><p class="empty">正在加载每日时间表…</p></div>';
-   if(!window.__daybookLoader)window.__daybookLoader=import("./daybook.js?v=20261020-min1");
-   window.__daybookLoader.then(mod=>{
-     if(view==='schedule')mod.renderDaybook(el,{data:()=>db,save,toast},{compact:false});
-   }).catch(error=>{
-     console.error('Daybook could not load',error);
-     if(view==='schedule')el.innerHTML='<p class="empty">时间表暂时无法加载，请刷新重试。</p>';
-   });
-   return;
- }
-
  if(view==='life' || view==='vault'){
    el.innerHTML='<section class="panel"><h3>正在加载私人空间…</h3></section>';
    const isLife=view==='life';
@@ -189,6 +176,7 @@ function render(){
  document.querySelectorAll('.atlas-rail a[href]').forEach(a=>{const h=a.hash.slice(1);a.classList.toggle('active',h===(view==='dashboard'?'home':view));});
 }
 function changeView(v){
+ if(v==='schedule')v='dashboard';
  if(v!=='dashboard'&&!meta[v])v='dashboard';
  view=v;window.location.hash=v==='dashboard'?'home':v;render();
  window.scrollTo({top:0,behavior:'smooth'});
@@ -270,6 +258,6 @@ document.addEventListener('submit',e=>{
 });
 $('topDate').textContent=verboseDate(TODAY);
 const h=window.location.hash.replace('#','');if(meta[h])view=h;
-window.addEventListener('hashchange',()=>{const next=window.location.hash.slice(1);if(next==='home'||next==='dashboard')view='dashboard';else if(meta[next])view=next;render()});
+window.addEventListener('hashchange',()=>{const next=window.location.hash.slice(1);if(next==='home'||next==='dashboard'||next==='schedule')view='dashboard';else if(meta[next])view=next;render()});
 render();refreshPapers();
 })();
