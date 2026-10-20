@@ -5,7 +5,7 @@ const mod=await import("data:text/javascript;charset=utf-8,"+encodeURIComponent(
 assert.equal(mod.validateDayEntry({date:"2026-10-20",start:"09:00",end:"10:30",title:"阅读论文",category:"科研",status:"已记录",note:""}),null);
 assert.match(mod.validateDayEntry({date:"2026-10-20",start:"10:30",end:"09:00",title:"不合法",category:"科研",status:"计划"}),/结束时间/);
 assert.match(mod.validateDayEntry({date:"2026-10-20",start:"09:00",end:"10:00",title:"",category:"科研",status:"计划"}),/填写/);
-assert.equal(mod.normalizeDaybook({}),[]);
+assert.equal(mod.normalizeDaybook({}).length,0);
 const previousFormData=globalThis.FormData,previousConfirm=globalThis.confirm;
 globalThis.FormData=class{constructor(form){this.values=form.values;}get(k){return this.values[k]??null;}};
 globalThis.confirm=()=>true;
