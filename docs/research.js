@@ -114,7 +114,7 @@ function renderModule(){
  const el=$('moduleContent');
  if(view==='literature'){
    el.innerHTML='<div class="pq-shell"><p class="pq-empty">正在载入私人文献…</p></div>';
-   if(!window.__paperQueueLoader)window.__paperQueueLoader=import("./paper-queue.js?v=20261020-queue1");
+   if(!window.__paperQueueLoader)window.__paperQueueLoader=import("./paper-queue.js?v=20261020-queue2");
    window.__paperQueueLoader.then(mod=>{
      if(view==='literature')mod.renderPaperQueue(el,{data:()=>db,feed:()=>paperFeed,save,toast});
    }).catch(error=>{
