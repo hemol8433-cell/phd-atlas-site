@@ -198,7 +198,7 @@ async function refreshPapers(){
 function exportFile(){
  const data=JSON.stringify({...db,exportedAt:new Date().toISOString()},null,2);
  const blob=new Blob([data],{type:'application/json'});
- const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='PhD-Atlas-成长记录-'+TODAY+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='Dayflow-个人记录-'+TODAY+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
  toast('已生成本地备份文件');
 }
 function validateImport(x){
