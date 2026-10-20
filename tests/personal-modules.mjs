@@ -1,0 +1,18 @@
+import assert from "node:assert/strict";
+import fs from "node:fs/promises";
+const life=await import("data:text/javascript;charset=utf-8,"+encodeURIComponent(await fs.readFile(new URL("../docs/life.js",import.meta.url),"utf8")));
+const vault=await import("data:text/javascript;charset=utf-8,"+encodeURIComponent(await fs.readFile(new URL("../docs/vault.js",import.meta.url),"utf8")));
+assert.equal(life.normalizeLife(null).habits.length,4);
+const previouslySaved={habits:[{id:"h",name:"Walk"}],checks:{"2026-10-19":["h"]},todos:[{id:"t",title:"Buy groceries"}],daily:{"2026-10-19":{mood:4}},expenses:[]};
+const restored=life.normalizeLife(previouslySaved);
+assert.equal(restored.checks["2026-10-19"][0],"h");
+assert.equal(restored.todos[0].title,"Buy groceries");
+assert.equal(vault.fileIsAllowed({name:"diagram.png",type:"image/png",size:2048}),true);
+assert.equal(vault.fileIsAllowed({name:"report.pdf",type:"application/pdf",size:1024}),true);
+assert.equal(vault.fileIsAllowed({name:"notes.docx",type:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",size:1024}),true);
+assert.equal(vault.fileIsAllowed({name:"malware.exe",type:"application/x-msdownload",size:1024}),false);
+assert.equal(vault.fileIsAllowed({name:"huge.pdf",type:"application/pdf",size:26*1024*1024}),false);
+const existing={version:1,entries:[{id:"research-preserved",text:"Do not lose existing notes"}],life:previouslySaved,vaultFiles:[{path:"id/uploads/research/doc.pdf",name:"doc.pdf"}]};
+assert.equal(existing.entries[0].id,"research-preserved");
+assert.equal(life.normalizeLife(existing.life).habits[0].name,"Walk");
+console.log("PASS: existing life data, private vault file allowlist, size validation, coexistence with research records");
