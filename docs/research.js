@@ -157,7 +157,7 @@ function renderModule(){
  }
  if(view==='projectday'){
    el.innerHTML='<section class="panel"><h3>正在加载科研执行中心…</h3></section>';
-   if(!window.__projectDayLoader)window.__projectDayLoader=import("./projectday.js?v=20261020-pd2");
+   if(!window.__projectDayLoader)window.__projectDayLoader=import("./projectday.js?v=20261020-pd3");
    window.__projectDayLoader.then(mod=>{
      if(view==='projectday')mod.renderProjectDay(el,{data:()=>db,save,toast});
    }).catch(error=>{
@@ -224,7 +224,7 @@ async function refreshPapers(){
 function exportFile(){
  const data=JSON.stringify({...db,exportedAt:new Date().toISOString()},null,2);
  const blob=new Blob([data],{type:'application/json'});
- const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='Dayflow-个人记录-'+TODAY+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='岁序-个人记录-'+TODAY+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
  toast('已生成本地备份文件');
 }
 function validateImport(x){
