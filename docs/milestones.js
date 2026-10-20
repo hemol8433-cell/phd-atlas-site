@@ -20,7 +20,7 @@ export function normalizeMilestones(items){
   reflections:Array.isArray(x.reflections)
    ?x.reflections.filter(r=>r&&typeof r.id==="string"&&typeof r.text==="string").slice(0,500).map(r=>({
       id:r.id, text:r.text.slice(0,4000),
-      date:/^\d{4}-\d{2}-\d{2}$/.test(r.date||"")?r.date:(/^\d{4}-\d{2}-\d{2}$/.test(r.createdAt||"")?r.createdAt.slice(0,10):""),
+      date:/^\d{4}-\d{2}-\d{2}$/.test(r.date||"")?r.date:(/^\d{4}-\d{2}-\d{2}/.test(r.createdAt||"")?r.createdAt.slice(0,10):""),
       type:r.type==="达成感悟"?"达成感悟":"阶段感悟",
       createdAt:r.createdAt||"",
       updatedAt:r.updatedAt||""
@@ -91,7 +91,7 @@ export function renderMilestones(root,api){
    persist();refresh();return;
   }
   if(action==="toggle"){
-   if(obj.status==="已完成"){obj.status="进行中";obj.completedAt="";obj.progress=Math.min(95,obj.progress||0);}
+   if(obj.status==="已完成"){obj.status="进行中";obj.completedAt="";obj.progress=Math.min(95,obj.progress||0);reflectionTarget=null;reflectionEditId=null;}
    else {obj.status="已完成";obj.completedAt=DAY();obj.progress=100;reflectionTarget=id;reflectionEditId=null;}
    persist();refresh();
   }
