@@ -10,7 +10,18 @@ const statusList=["计划中","进行中","已完成","暂缓"];
 export function normalizeProjectDay(x){
  const d={projects:[],tasks:[],sessions:[],ideas:[],daily:{},timer:{startedAt:null,elapsedMs:0,projectId:"",segments:[]}};
  if(!x||typeof x!=="object")return d;
- for(const k of ["projects","tasks","sessions","ideas"])if(Array.isArray(x[k]))d[k]=x[k].slice(0,3000);
+ for(const k of ["tasks","sessions","ideas"])if(Array.isArray(x[k]))d[k]=x[k].slice(0,3000);
+ if(Array.isArray(x.projects))d.projects=x.projects.slice(0,3000).filter(p=>p&&typeof p==="object").map(p=>{
+  const progressNotes=Array.isArray(p.progressNotes)?p.progressNotes.slice(-500).filter(n=>n&&typeof n==="object"&&typeof n.id==="string"&&typeof n.text==="string").map(n=>({
+   id:n.id,
+   date:/^\d{4}-\d{2}-\d{2}$/.test(n.date||"")?n.date:"",
+   text:String(n.text||"").slice(0,4000),
+   nextStep:String(n.nextStep||"").slice(0,800),
+   createdAt:String(n.createdAt||""),
+   updatedAt:String(n.updatedAt||"")
+  })): [];
+  return {...p,progressNotes};
+ });
  if(x.daily&&typeof x.daily==="object"&&!Array.isArray(x.daily))d.daily=x.daily;
  if(x.timer&&typeof x.timer==="object"){
   d.timer.elapsedMs=Math.max(0,Number(x.timer.elapsedMs)||0);
@@ -20,7 +31,7 @@ export function normalizeProjectDay(x){
  }
  return d;
 }
-let kind="灵感",weekOffset=0,ticker;
+let kind="灵感",weekOffset=0,ticker,progressEditorProjectId="",progressEditorNoteId="";
 export function renderProjectDay(root,api){
  const data=api.data(),s=data.projectday=normalizeProjectDay(data.projectday);
  const today=NOW(), monday=new Date(today+"T12:00:00");
@@ -47,7 +58,13 @@ export function renderProjectDay(root,api){
    const ts=s.tasks.filter(x=>x.projectId===p.id),done=ts.filter(x=>x.done).length;
    const time=s.sessions.filter(x=>x.projectId===p.id).reduce((n,x)=>n+(Number(x.seconds)||0),0);
    const percent=ts.length?Math.round(100*done/ts.length):0;
-   return '<article class="pd-project"><div class="pd-project-top"><div><h3>'+E(p.title)+'</h3><p>'+E(p.description||p.category||"研究项目")+'</p></div><select data-pd-change="project-status" data-id="'+E(p.id)+'">'+statuses(p.status)+'</select></div><div class="pd-bar"><span style="width:'+percent+'%"></span></div><footer><small>'+done+'/'+ts.length+' 项完成 · '+duration(time)+' 投入'+(p.due?" · "+E(p.due):"")+'</small><button type="button" data-pd-act="remove-project" data-id="'+E(p.id)+'">删除</button></footer></article>';
+   const notes=(Array.isArray(p.progressNotes)?p.progressNotes:[]).slice().sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))||String(b.createdAt||"").localeCompare(String(a.createdAt||"")));
+   const editorOpen=progressEditorProjectId===p.id;
+   const editing=editorOpen&&progressEditorNoteId?notes.find(n=>n.id===progressEditorNoteId):null;
+   const editor=editorOpen?'<form class="pd-form pd-progress-form" data-pd-form="progress-note" data-project-id="'+E(p.id)+'"><label>日期<input name="date" type="date" value="'+E(editing?.date||today)+'" required/></label><label>本次进展<textarea name="text" rows="4" maxlength="4000" required placeholder="这段时间推进了什么？结果如何？遇到了什么问题？">'+E(editing?.text||"")+'</textarea></label><label>下一步 / 当前阻碍（选填）<textarea name="nextStep" rows="2" maxlength="800" placeholder="接下来准备验证什么，或还卡在哪里？">'+E(editing?.nextStep||"")+'</textarea></label><div class="pd-progress-actions"><button class="pd-primary" type="submit">'+(editing?"保存修改":"保存进展")+'</button><button type="button" data-pd-act="progress-cancel">取消</button></div></form>':'';
+   const noteRows=notes.slice(0,3).map(n=>'<article class="pd-progress-note"><header><time>'+E(n.date||"未注明日期")+'</time><div><button type="button" data-pd-act="progress-edit" data-id="'+E(p.id)+'" data-note-id="'+E(n.id)+'">编辑</button><button type="button" data-pd-act="progress-delete" data-id="'+E(p.id)+'" data-note-id="'+E(n.id)+'">删除</button></div></header><p>'+E(n.text)+'</p>'+(n.nextStep?'<small><b>下一步</b> · '+E(n.nextStep)+'</small>':'')+'</article>').join("");
+   const history=notes.length?'<details class="pd-progress-history"'+(editorOpen?' open':'')+'><summary>项目进展 · '+notes.length+' 条</summary><div class="pd-progress-list">'+noteRows+(notes.length>3?'<p class="pd-progress-more">显示最近 3 条，较早的记录仍保存在项目中。</p>':'')+'</div></details>':'<p class="pd-progress-empty">还没有进展记录。</p>';
+   return '<article class="pd-project"><div class="pd-project-top"><div><h3>'+E(p.title)+'</h3><p>'+E(p.description||p.category||"研究项目")+'</p></div><select data-pd-change="project-status" data-id="'+E(p.id)+'">'+statuses(p.status)+'</select></div><div class="pd-bar"><span style="width:'+percent+'%"></span></div><footer><small>'+done+'/'+ts.length+' 项完成 · '+duration(time)+' 投入'+(p.due?" · "+E(p.due):"")+'</small><button type="button" data-pd-act="remove-project" data-id="'+E(p.id)+'">删除</button></footer><div class="pd-project-progress-toolbar"><span>进展记录 · '+notes.length+' 条</span><button type="button" data-pd-act="progress-open" data-id="'+E(p.id)+'">'+(editorOpen?"收起编辑":"＋ 记录进展")+'</button></div>'+history+editor+'</article>';
  }).join("");
  const log=s.sessions.slice(-10).reverse().map(x=>'<div class="pd-log"><time>'+E(x.date)+'</time><div><b>'+E(pname(x.projectId))+'</b><p>'+E(x.note||"专注时段")+'</p></div><strong>'+duration(x.seconds)+'</strong><button type="button" data-pd-act="remove-session" data-id="'+E(x.id)+'">×</button></div>').join("");
  const ideas=s.ideas.slice(-10).reverse().map(x=>'<div class="pd-idea"><span>'+E(x.type)+'</span><p>'+E(x.text)+'</p><small>'+E(x.date)+'</small><button type="button" data-pd-act="remove-idea" data-id="'+E(x.id)+'">×</button></div>').join("");
@@ -67,7 +84,7 @@ export function renderProjectDay(root,api){
  '<div class="pd-bottom-grid"><section class="pd-panel"><div class="pd-heading"><h3>04 · 执行日志</h3><span>按实际投入积累</span></div>'+(log||'<p class="pd-empty">完成一次专注或补记时间后，记录会出现在这里。</p>')+'</section><section class="pd-panel"><div class="pd-heading"><h3>05 · 灵感与成长</h3><span>连接每一天的思考</span></div>'+(ideas||'<p class="pd-empty">这里会保存你的灵感、情绪和方法心得。</p>')+'</section></div>',
  '<p class="pd-privacy">🔒 仅你登录后可查看。项目、任务、投入和灵感会同步到受保护的 Supabase 记录中，建议定期导出备份。</p>'
  ].join("");
- const persist=()=>{api.save();api.toast("已提交私人数据同步");};
+ const persist=(message="已提交私人数据同步")=>{api.save();api.toast(message);};
  const redraw=()=>renderProjectDay(root,api);
  if(ticker)clearInterval(ticker);
  ticker=setInterval(()=>{const node=root.querySelector("#pd-clock");if(node)node.textContent=clock();},1000);
@@ -75,12 +92,33 @@ export function renderProjectDay(root,api){
   const button=e.target.closest("[data-pd-act]");if(!button||!root.contains(button))return;
   const act=button.dataset.pdAct,key=button.dataset.id;
   if(act==="idea-kind"){kind=button.dataset.pdKind;redraw();return;}
+  if(act==="progress-open"){
+   if(progressEditorProjectId===key){progressEditorProjectId="";progressEditorNoteId="";}
+   else {progressEditorProjectId=key;progressEditorNoteId="";}
+   redraw();return;
+  }
+  if(act==="progress-cancel"){progressEditorProjectId="";progressEditorNoteId="";redraw();return;}
+  if(act==="progress-edit"){
+   const project=getProject(key),note=project&&Array.isArray(project.progressNotes)?project.progressNotes.find(n=>n.id===button.dataset.noteId):null;
+   if(!note)return;
+   progressEditorProjectId=key;progressEditorNoteId=note.id;redraw();return;
+  }
+  if(act==="progress-delete"){
+   const project=getProject(key);
+   if(!project||!Array.isArray(project.progressNotes))return;
+   const note=project.progressNotes.find(n=>n.id===button.dataset.noteId);
+   if(!note||!confirm("确定删除这条项目进展吗？"))return;
+   project.progressNotes=project.progressNotes.filter(n=>n.id!==note.id);
+   if(progressEditorProjectId===key&&progressEditorNoteId===note.id){progressEditorProjectId="";progressEditorNoteId="";}
+   persist("项目进展已删除并同步");redraw();return;
+  }
   if(act==="prev-week"||act==="next-week"){weekOffset+=act==="prev-week"?-1:1;redraw();return;}
   if(["remove-task","remove-idea","remove-session","remove-project"].includes(act)){
    if(!confirm("确定删除这条记录吗？"))return;
    const group=act.replace("remove-",""),field=({task:"tasks",idea:"ideas",session:"sessions",project:"projects"})[group];
    if(!field)return;
    s[field]=s[field].filter(x=>x.id!==key);
+   if(field==="projects"&&progressEditorProjectId===key){progressEditorProjectId="";progressEditorNoteId="";}
    if(field==="projects"&&s.timer.projectId===key){s.timer.startedAt=null;s.timer.elapsedMs=0;s.timer.segments=[];s.timer.projectId="";}
    persist();redraw();return;
   }
@@ -132,9 +170,22 @@ export function renderProjectDay(root,api){
   e.preventDefault();
   const form=new FormData(f),value=k=>String(form.get(k)||"").trim();
   const which=f.dataset.pdForm;
-  if(which==="project"){
+  if(which==="progress-note"){
+   const project=getProject(f.dataset.projectId);
+   if(!project){api.toast("找不到这个项目");return;}
+   const date=value("date"),text=value("text"),nextStep=value("nextStep");
+   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){api.toast("请选择有效日期");return;}
+   if(!text){api.toast("请写下本次项目进展");return;}
+   if(!Array.isArray(project.progressNotes))project.progressNotes=[];
+   const existing=project.progressNotes.find(n=>n.id===progressEditorNoteId);
+   const stamp=new Date().toISOString();
+   if(existing)Object.assign(existing,{date,text:text.slice(0,4000),nextStep:nextStep.slice(0,800),updatedAt:stamp});
+   else project.progressNotes.push({id:ID(),date,text:text.slice(0,4000),nextStep:nextStep.slice(0,800),createdAt:stamp,updatedAt:stamp});
+   progressEditorProjectId="";progressEditorNoteId="";
+   persist("项目进展已保存并同步");redraw();return;
+  }else if(which==="project"){
    if(!value("title"))return;
-   s.projects.push({id:ID(),title:value("title").slice(0,120),category:value("category"),due:value("due"),description:value("description").slice(0,600),status:"计划中"});
+   s.projects.push({id:ID(),title:value("title").slice(0,120),category:value("category"),due:value("due"),description:value("description").slice(0,600),status:"计划中",progressNotes:[]});
   }else if(which==="task"){
    if(!value("title"))return;
    s.tasks.push({id:ID(),title:value("title").slice(0,250),projectId:value("projectId"),quadrant:value("quadrant"),due:value("due"),done:false});
