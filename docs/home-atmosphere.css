@@ -1,0 +1,104 @@
+/* Dayflow — a changing, quiet light-scape for the HOME view only.
+   Other research and life pages retain the neutral, readable palette. */
+body.home-atmosphere-active {
+  --sky-base:#f4f5eb;--sky-a:#f8e8c5;--sky-b:#e0efde;
+  --sky-hero:#fbfcf6;--sky-ink:#344738;--sky-accent:#829364;
+  --sky-surface:rgba(255,255,255,.9);--sky-outline:rgba(122,152,116,.18);
+  background-color:var(--sky-base);
+  background-image:
+    radial-gradient(ellipse 57% 40% at 94% 10%,var(--sky-a),transparent 90%),
+    radial-gradient(ellipse 57% 43% at 0% 48%,var(--sky-b),transparent 91%);
+  background-attachment:fixed;
+  transition:background-color 1.2s ease;
+}
+body.home-atmosphere-active[data-daypart="morning"]{
+  --sky-base:#f7f4e9;--sky-a:#fce2ba;--sky-b:#dbecde;
+  --sky-hero:#fff9ed;--sky-ink:#4a493b;--sky-accent:#bc8f62;
+  --sky-outline:rgba(185,151,100,.23);
+}
+body.home-atmosphere-active[data-daypart="midday"]{
+  --sky-base:#f6f7eb;--sky-a:#faf0bb;--sky-b:#e0f1e8;
+  --sky-hero:#fffced;--sky-ink:#3c4a3b;--sky-accent:#9c9b56;
+  --sky-outline:rgba(155,172,101,.23);
+}
+body.home-atmosphere-active[data-daypart="afternoon"]{
+  --sky-base:#edf5ef;--sky-a:#e4f3dd;--sky-b:#e1ecf7;
+  --sky-hero:#f5fbf5;--sky-ink:#33534b;--sky-accent:#64947b;
+  --sky-outline:rgba(110,169,140,.22);
+}
+body.home-atmosphere-active[data-daypart="evening"]{
+  --sky-base:#f7f0ed;--sky-a:#f8dcca;--sky-b:#e8e3f6;
+  --sky-hero:#fff3ed;--sky-ink:#56434f;--sky-accent:#bb8390;
+  --sky-outline:rgba(168,130,155,.22);
+}
+body.home-atmosphere-active[data-daypart="night"]{
+  --sky-base:#eaeef6;--sky-a:#d9e1f5;--sky-b:#dbe7ec;
+  --sky-hero:#edf1fa;--sky-ink:#334660;--sky-accent:#7485b3;
+  --sky-outline:rgba(114,134,173,.24);
+}
+body.home-atmosphere-active .home-simple {
+  position:relative;
+  isolation:isolate;
+}
+body.home-atmosphere-active .home-welcome{
+  position:relative;
+  min-height:168px;
+  align-items:center;
+  padding:26px 32px;
+  margin:0 0 15px;
+  background:
+    radial-gradient(ellipse 42% 95% at 91% 8%,var(--sky-a),transparent 100%),
+    linear-gradient(110deg,var(--sky-hero),rgba(255,255,255,.65));
+  border:1px solid var(--sky-outline);
+  border-radius:20px;
+  overflow:hidden;
+}
+body.home-atmosphere-active .home-welcome:after{
+  content:"";
+  position:absolute;
+  z-index:0;
+  pointer-events:none;
+  right:7%;
+  top:21%;
+  width:78px;height:78px;
+  border-radius:50%;
+  background:radial-gradient(circle,var(--sky-a),transparent 73%);
+  opacity:.8;
+  transform:scale(1.5);
+}
+body.home-atmosphere-active .home-welcome>*{position:relative;z-index:1}
+body.home-atmosphere-active .home-welcome h1{
+  color:var(--sky-ink);
+  font-size:clamp(23px,2.8vw,35px);
+  max-width:760px;
+  line-height:1.45;
+  margin:9px 0 5px;
+  transition:color .6s ease;
+}
+body.home-atmosphere-active .home-eyebrow{color:var(--sky-accent)}
+body.home-atmosphere-active .home-welcome p{font-size:11px;color:#93a19a}
+body.home-atmosphere-active .home-welcome time{
+  background:rgba(255,255,255,.75);
+  border:1px solid var(--sky-outline);
+  color:var(--sky-ink);
+}
+body.home-atmosphere-active .home-entry{
+  background:var(--sky-surface);
+  border-color:var(--sky-outline);
+  box-shadow:0 6px 22px rgba(58,85,66,.06);
+}
+body.home-atmosphere-active .home-entry:hover{border-color:var(--sky-accent)}
+body.home-atmosphere-active .wk-shell{
+  background:rgba(255,255,255,.93);
+  border-color:var(--sky-outline);
+  box-shadow:0 6px 24px rgba(56,75,68,.07);
+}
+body.home-atmosphere-active .topbar{border-bottom-color:var(--sky-outline)}
+@media(max-width:750px){
+  body.home-atmosphere-active .home-welcome{min-height:135px;padding:19px 19px}
+  body.home-atmosphere-active .home-welcome:after{opacity:.45;right:-5%;top:0}
+}
+@media(prefers-reduced-motion:reduce){
+  body.home-atmosphere-active,
+  body.home-atmosphere-active .home-welcome h1{transition:none}
+}
