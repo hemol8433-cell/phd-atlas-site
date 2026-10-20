@@ -14,6 +14,8 @@ jobs:
         run: |
           node --check docs/research.js
           node --check docs/projectday.js
+          node --check docs/life.js
+          node --check docs/vault.js
           node --check docs/auth-core.js
           node --check docs/auth-gate.js
           node --check docs/login.js
@@ -22,6 +24,8 @@ jobs:
         run: node tests/auth-session.mjs
       - name: Test ProjectDay workflows
         run: node tests/projectday.mjs
+      - name: Test personal modules
+        run: node tests/personal-modules.mjs
       - name: Validate public/private file boundary
         run: |
           python - <<'PY'
@@ -30,13 +34,16 @@ jobs:
           docs=Path('docs')
           allowed={'index.html','app.html','auth-config.js','auth-core.js',
                    'auth-gate.js','login.js','research.css','research.js',
-                   'papers.html','.nojekyll','projectday.js','projectday.css'}
+                   'papers.html','.nojekyll','projectday.js','projectday.css','life.js','vault.js','personal-refresh.css'}
           found={p.name for p in docs.rglob('*') if p.is_file()}
           assert found==allowed, f'Unexpected public assets: {found.symmetric_difference(allowed)}'
           assert 'githubLogin' in (docs/'index.html').read_text()
           assert 'auth-gate.js' in (docs/'app.html').read_text()
           assert 'projectday.css' in (docs/'app.html').read_text()
           assert 'projectday.js' in (docs/'research.js').read_text()
+          assert 'life.js' in (docs/'research.js').read_text()
+          assert 'vault.js' in (docs/'research.js').read_text()
+          assert 'personal-refresh.css' in (docs/'app.html').read_text()
           assert 'sb_publishable_' in (docs/'auth-config.js').read_text()
           assert not (docs/'data/papers.json').exists()
           assert not Path('private_data').exists()
