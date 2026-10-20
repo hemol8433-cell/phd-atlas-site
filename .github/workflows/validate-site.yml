@@ -20,6 +20,7 @@ jobs:
           node --check docs/weekboard.js
           node --check docs/milestones.js
           node --check docs/paper-queue.js
+          node --check docs/home-atmosphere.js
           node --check docs/auth-core.js
           node --check docs/auth-gate.js
           node --check docs/login.js
@@ -40,6 +41,8 @@ jobs:
         run: node tests/milestones.mjs
       - name: Test paper backlog and reading states
         run: node tests/paper-queue.mjs
+      - name: Test daily homepage headline and atmosphere
+        run: node tests/home-atmosphere.mjs
       - name: Validate public/private file boundary
         run: |
           python - <<'PY'
@@ -48,7 +51,7 @@ jobs:
           docs=Path('docs')
           allowed={'index.html','app.html','auth-config.js','auth-core.js',
                    'auth-gate.js','login.js','research.css','research.js',
-                   'papers.html','.nojekyll','projectday.js','projectday.css','life.js','vault.js','personal-refresh.css','daybook.js','minimal-home.css','weekboard.js','weekboard.css','milestones.js','milestones.css','paper-queue.js','quiet-ui.css'}
+                   'papers.html','.nojekyll','projectday.js','projectday.css','life.js','vault.js','personal-refresh.css','daybook.js','minimal-home.css','weekboard.js','weekboard.css','milestones.js','milestones.css','paper-queue.js','quiet-ui.css','home-atmosphere.js','home-atmosphere.css'}
           found={p.name for p in docs.rglob('*') if p.is_file()}
           assert found==allowed, f'Unexpected public assets: {found.symmetric_difference(allowed)}'
           assert 'githubLogin' in (docs/'index.html').read_text()
@@ -65,6 +68,9 @@ jobs:
           assert 'milestones.js' in (docs/'research.js').read_text()
           assert 'paper-queue.js' in (docs/'research.js').read_text()
           assert 'quiet-ui.css' in (docs/'app.html').read_text()
+          assert 'home-atmosphere.css' in (docs/'app.html').read_text()
+          assert 'home-atmosphere.js' in (docs/'research.js').read_text()
+          assert 'id="homeTitle"' in (docs/'app.html').read_text()
           assert 'data-view="schedule"' not in (docs/'app.html').read_text()
           assert 'data-view="schedule"' not in (docs/'research.js').read_text()
           assert 'id="homeDaybook"' in (docs/'app.html').read_text()
