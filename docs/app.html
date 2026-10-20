@@ -8,15 +8,27 @@
 <title>PhD Atlas · 博士科研成长工作台</title>
 <link rel="stylesheet" href="./research.css?v=1"/>
 <link rel="stylesheet" href="./projectday.css?v=20261020-pd1"/>
+<link rel="stylesheet" href="./personal-refresh.css?v=20261020-ui1"/>
 </head>
 <body>
+<nav class="atlas-rail" aria-label="工作台快捷导航">
+ <a class="atlas-rail-logo" href="./app.html#home" title="PhD Atlas 首页">✳</a>
+ <hr />
+ <a href="./app.html#home" title="科研与生活首页">⌂</a>
+ <a href="./app.html#projectday" title="科研执行中心">▥</a>
+ <a href="./app.html#life" title="生活空间">♡</a>
+ <a href="./app.html#vault" title="私人资料库">▣</a>
+ <a href="./app.html#literature" title="私人文献雷达">▦</a>
+ <hr />
+ <a href="./app.html#settings" title="隐私与备份">⚙</a>
+</nav>
 <div class="page">
   <header class="topbar">
     <a class="brand" href="./app.html" aria-label="返回博士成长首页">
       <span class="brand-logo">✳</span>
       <span>
         <span class="brand-title"><h1>PhD Atlas</h1><span class="pill">博士成长工作台</span></span>
-        <span class="brand-sub">把每一天的科研过程，变成看得见的成长。</span>
+        <span class="brand-sub">科研与生活同行，让成长有迹可循。</span>
       </span>
     </a>
     <div class="header-right">
@@ -27,11 +39,15 @@
     </div>
   </header>
   <section class="intro">
-    <div><h2>把研究做深，把成长留下。</h2><p id="introDate">今天的科研，也值得记录。</p></div>
+    <div><h2>认真做科研，也认真生活。</h2><p id="introDate">科研、生活与长远成长都值得记录。</p></div>
     <div class="intro-badges"><span id="growthMetric">博士第 2 年</span><span id="entryMetric">0 条科研记录</span><span id="outcomeMetric">0 项成果</span></div>
   </section>
   <div class="view active" id="dashboardView">
     <section class="pd-entry-shortcut"><div><h3>▥ ProjectDay · 科研执行中心</h3><p>项目进度 · 重要/紧急四象限 · 专注时间 · 每日重点 · 灵感记录</p></div><button type="button" data-view="projectday">进入执行中心 →</button></section>
+    <div class="atlas-shortcut-grid">
+      <section class="atlas-shortcut"><div><h3>♡ 生活空间 · Life & Balance</h3><p>心情、习惯、日常计划和生活记录</p></div><button type="button" data-view="life">进入生活空间 →</button></section>
+      <section class="atlas-shortcut"><div><h3>▣ 我的资料库 · Private Vault</h3><p>跨设备上传、查看和管理私人图片及文档</p></div><button type="button" data-view="vault">管理文件 →</button></section>
+    </div>
     <div class="dashboard-grid">
       <aside class="panel inbox">
         <div class="panel-head"><div class="icon-title"><span class="panel-symbol">✎</span><h2 class="panel-title">随手记 · Inbox</h2></div></div>
@@ -101,7 +117,7 @@
     <div id="moduleNav"></div>
     <div id="moduleContent"></div>
   </div>
-  <footer>PhD Atlas · 按你自己的节奏成长　·　科研记录保存于私人数据库，建议定期备份　·　<a href="./app.html#literature" style="color:#6470ba">进入私人文献雷达 ↗</a></footer>
+  <footer>PhD Atlas · 科研与生活一起成长　·　科研记录保存于私人数据库，建议定期备份　·　<a href="./app.html#literature" style="color:#6470ba">进入私人文献雷达 ↗</a></footer>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
 <script src="./auth-config.js"></script><style>html{visibility:hidden}</style><script type="module" src="./auth-gate.js"></script>
