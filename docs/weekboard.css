@@ -58,3 +58,11 @@
 .home-simple{max-width:1300px}
 @media(max-width:950px){.wk-lower{grid-template-columns:1fr}.wk-head{flex-direction:column}.wk-head-controls{align-self:stretch}}
 @media(max-width:550px){.wk-shell{padding:16px 12px}.wk-head h2{font-size:18px}.wk-head-controls strong{font-size:11px}.wk-two{grid-template-columns:1fr 1fr}.wk-grid{gap:7px}}
+
+/* Life focus: a compact row beneath habits and daily diary. */
+.lf-focus-panel{margin-bottom:15px}
+.lf-focus-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.lf-focus-row select{border:1px solid #dde6db;background:#fafcf7;border-radius:9px;padding:9px 10px;font-size:12px;color:#4b604f;min-width:120px}
+.lf-focus-row strong{font:700 20px ui-monospace,Consolas,monospace;color:#537a61;margin:0 auto}
+.lf-focus-row button{border:1px solid #e2e9dc;background:#f1f6eb;border-radius:9px;padding:9px 12px;font-size:11px;color:#527157}
+.lf-focus-row button[data-lf-focus="toggle"]{background:#e4edb2;color:#354c39;font-weight:750}
