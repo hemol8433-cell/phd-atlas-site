@@ -17,14 +17,25 @@ export async function createAuthContext() {
 
 export async function getAuthorizedUser(ctx) {
   if (!ctx.configured) return null;
-  // Auth verifies the access token with Supabase, not just the cached browser state.
+
+  // A brand-new visitor is expected to have no session. Never treat this as
+  // an authentication-service failure or disable the sign-in button.
+  const { data: sessionData, error: sessionError } = await ctx.client.auth.getSession();
+  if (sessionError) throw sessionError;
+  if (!sessionData?.session) return null;
+
+  // Verify the session remotely (getSession alone does not verify identity).
   const { data, error } = await ctx.client.auth.getUser();
-  if (error) throw error;
+  if (error) {
+    if (error.name === "AuthSessionMissingError" ||
+        /auth session missing/i.test(error.message || "")) return null;
+    throw error;
+  }
   if (!data?.user) return null;
 
-  // Authorize with a server-side RLS decision, not an optional identity field
-  // in the browser SDK. The feed row is seeded and its SELECT policy grants
-  // access only when auth.identities contains the fixed GitHub account ID.
+  // Server-side RLS is authoritative, not optional GitHub metadata returned
+  // by the browser SDK. The seeded row is only visible to the one approved
+  // GitHub ID under private.is_phd_atlas_owner().
   const check = await ctx.client.from("phd_private_papers")
     .select("id")
     .eq("id", 1)
