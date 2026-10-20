@@ -1,4 +1,4 @@
-import { createAuthContext, getAuthorizedUser } from "./auth-core.js";
+import { createAuthContext, getAuthorizedUser } from "./auth-core.js?v=20261020-2";
 const redirect = () => location.replace("./index.html");
 try {
   const ctx = await createAuthContext();
