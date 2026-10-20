@@ -46,6 +46,7 @@ export function renderPaperQueue(root,api){
  db.paperQueue=normalizePaperQueue(db.paperQueue);
  const queue=db.paperQueue,today=localToday(),asOf=DATE(feed.generated_at);
  const latestIDs=new Set((feed.today_ids||[]).map(String));
+ const sourceLabel=/arxiv/i.test(String(feed.source||""))?"arXiv · PINN":"文献数据源";
  const changed=updatePaperQueue(queue,feed,today);
  if(changed)api.save();
  const index=new Map((feed.papers||[]).map(p=>[String(p.id||p.paper_id||p.doi),stablePaper(p)]));
@@ -88,9 +89,9 @@ export function renderPaperQueue(root,api){
   return '<article class="pq-paper"><div class="pq-paper-top"><div class="pq-paper-main"><div class="pq-mini">'+E(p.published||"发布日期未提供")+(fluid?' · '+E(fluid):"")+(p.journal?' · '+E(p.journal):"")+'</div><h3>'+E(p.title)+'</h3></div><span class="pq-state'+(old>0&&r.status!=="已读"?' overdue':'')+'">'+E(badge)+'</span></div><div class="pq-foot"><div class="pq-quick">'+actions+'</div><div class="pq-links">'+(href?'<a href="'+E(href)+'" target="_blank" rel="noopener noreferrer">论文 ↗</a>':"")+(pdf?'<a href="'+E(pdf)+'" target="_blank" rel="noopener noreferrer">PDF ↗</a>':"")+'</div></div>'+(abstract?'<details class="pq-details"><summary>'+(p.abstract_zh?"中文摘要":"英文摘要")+'</summary><p>'+E(abstract)+'</p></details>':"")+(r.status?'<details class="pq-details"><summary>阅读笔记'+(notes?" · 已保存":"")+'</summary><form data-pq-note="'+E(p.id)+'"><textarea name="note" rows="3" maxlength="10000" placeholder="方法、创新点、与我的研究的联系">'+E(notes)+'</textarea><button type="submit">保存笔记</button></form></details>':"")+'</article>';
  };
  const summary='<div class="pq-summary"><div><strong>'+newest.length+'</strong><span>本期推荐</span></div><div><strong>'+backlog.length+'</strong><span>积压待读</span></div><div><strong>'+read.length+'</strong><span>已读归档</span></div></div>';
- root.innerHTML='<div class="pq-shell"><div class="pq-head"><div><span class="pq-overline">PAPER INBOX · PRIVATE</span><h2>文献收件箱</h2></div><span class="pq-freshness'+(asOf!==today?" stale":"")+'">'+(asOf?"数据 "+asOf:"暂无同步日期")+'</span></div>'+summary+
+ root.innerHTML='<div class="pq-shell"><div class="pq-head"><div><span class="pq-overline">PAPER INBOX · PRIVATE</span><h2>文献收件箱</h2></div><div class="pq-meta"><span>'+E(sourceLabel)+'</span><span class="pq-freshness'+(asOf!==today?" stale":"")+'">'+(asOf?"更新 "+asOf:"暂无同步日期")+'</span></div></div>'+summary+
  '<div class="pq-toolbar"><div class="pq-tabs">'+tabs.map(x=>'<button type="button" data-pq-tab="'+x[0]+'"'+(tab===x[0]?' class="active"':'')+'>'+x[1]+' <span>'+x[2]+'</span></button>').join("")+'</div><label class="pq-search"><span>⌕</span><input id="pqSearch" placeholder="搜索论文" value="'+E(expandedSearch)+'"/></label></div><div class="pq-list">'+(list.length?list.slice(0,120).map(card).join(""):'<div class="pq-empty">这一栏暂时没有论文</div>')+'</div>'+
- '<div class="pq-legend">积压天数从首次进入推荐或待读清单之日起计算，不使用论文发表日。历史无推荐记录的论文可在「资料库」手动加入待读。</div></div>';
+ '<div class="pq-legend">积压天数按首次推荐或加入待读的日期计算。</div></div>';
  const rerender=()=>renderPaperQueue(root,api);
  const persist=()=>{api.save();api.toast("阅读状态已保存到私人云端");};
  root.onclick=e=>{
