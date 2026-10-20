@@ -226,6 +226,7 @@ function render(){
  $('homeNav').classList.toggle('hidden',view==='dashboard');
  if(view==='dashboard')renderDashboard();else renderModule();
  $('moduleNav').innerHTML=controls();
+ document.querySelectorAll('.atlas-rail a[href]').forEach(a=>{const h=a.hash.slice(1);a.classList.toggle('active',h===(view==='dashboard'?'home':view));});
 }
 function changeView(v){
  if(v!=='dashboard'&&!meta[v])v='dashboard';
