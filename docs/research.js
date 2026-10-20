@@ -27,11 +27,11 @@ const writingDefault=[
  {id:'results',title:'Experiments & Results',detail:'四种预处理与正反例分析',status:'计划中'},
  {id:'discussion',title:'Discussion & Limitations',detail:'适用条件、失效场景、敏感性',status:'计划中'}
 ];
-const defaultState=()=>({version:1,created:TODAY,year:2,entries:[],tasks:[],reviews:{},achievements:[],tracks:topics.map(x=>({...x})),milestones:[],writing:writingDefault.map(x=>({...x})),daybook:[],activityEvents:[]});
+const defaultState=()=>({version:1,created:TODAY,year:2,entries:[],tasks:[],reviews:{},achievements:[],tracks:topics.map(x=>({...x})),milestones:[],writing:writingDefault.map(x=>({...x})),daybook:[],activityEvents:[],paperQueue:{records:{}}});
 function load(){try{
  const saved=window.__phdWorkspaceDocument || null;
  if(!saved||saved.version!==1) return defaultState();
- const base=defaultState();if(Array.isArray(saved.daybook))base.daybook=saved.daybook.slice(0,5000);if(Array.isArray(saved.activityEvents))base.activityEvents=saved.activityEvents.slice(0,5000);if(saved.projectday && typeof saved.projectday==='object' && !Array.isArray(saved.projectday))base.projectday=saved.projectday;
+ const base=defaultState();if(saved.paperQueue&&typeof saved.paperQueue==='object'&&!Array.isArray(saved.paperQueue))base.paperQueue=saved.paperQueue;if(Array.isArray(saved.daybook))base.daybook=saved.daybook.slice(0,5000);if(Array.isArray(saved.activityEvents))base.activityEvents=saved.activityEvents.slice(0,5000);if(saved.projectday && typeof saved.projectday==='object' && !Array.isArray(saved.projectday))base.projectday=saved.projectday;
  if(saved.life && typeof saved.life==='object' && !Array.isArray(saved.life))base.life=saved.life;
  if(Array.isArray(saved.vaultFiles))base.vaultFiles=saved.vaultFiles.slice(0,5000);for(const k of ['entries','tasks','achievements'])if(Array.isArray(saved[k]))base[k]=saved[k].slice(0,5000);
  if(saved.reviews&&typeof saved.reviews==='object'&&!Array.isArray(saved.reviews))base.reviews=saved.reviews;
@@ -41,7 +41,7 @@ function load(){try{
  return base;
  }catch(e){return defaultState()}}
 let db=load();
-let view='dashboard', kind='实验',selected=TODAY,displayMonth=new Date(now.getFullYear(),now.getMonth(),1),weekOffset=0,papers=[];
+let view='dashboard', kind='实验',selected=TODAY,displayMonth=new Date(now.getFullYear(),now.getMonth(),1),weekOffset=0,papers=[],paperFeed={papers:[],today_ids:[]};
 const $=id=>document.getElementById(id);
 let pendingRemoteSave=Promise.resolve();
 function save(){
@@ -97,7 +97,7 @@ const meta={
  vault:['私人资料库','图片、文档、PDF 和研究材料保存在受保护的云端，支持跨设备读取。'],
  experiments:['实验日志','每次实验的目的、变量、结果、失败原因和下一步都值得追踪。'],
  questions:['研究问题库','把灵感变成假设，把卡住的地方变成可验证的问题。'],
- literature:['AI × 流体文献','每日推荐与中文摘要、论文筛选、阅读记录。'],
+ literature:['文献收件箱','私人阅读队列'],
  writing:['论文写作','每次修改、一次推导、一张结果图，都是论文进度。'],
  growth:['技能与成长','这里记录学会的工具、科研方法与心态变化。'],
  milestones:['成长里程碑','科研、生活和个人成长的目标都由你自由添加、修改与完成。'],
@@ -112,6 +112,18 @@ function notesFor(k){
 function entryForm(k,prompt){return '<form class="form-stack" data-form="module-entry" data-kind="'+k+'"><label>记录时间</label><input name="date" type="date" value="'+selected+'" required/><label>记录内容</label><textarea name="text" required maxlength="12000" placeholder="'+safe(prompt)+'"></textarea><button type="submit">保存到我的科研日志</button></form>'}
 function renderModule(){
  const el=$('moduleContent');
+ if(view==='literature'){
+   el.innerHTML='<div class="pq-shell"><p class="pq-empty">正在载入私人文献…</p></div>';
+   if(!window.__paperQueueLoader)window.__paperQueueLoader=import("./paper-queue.js?v=20261020-queue1");
+   window.__paperQueueLoader.then(mod=>{
+     if(view==='literature')mod.renderPaperQueue(el,{data:()=>db,feed:()=>paperFeed,save,toast});
+   }).catch(error=>{
+     console.error('Paper queue load error',error);
+     if(view==='literature')el.innerHTML='<div class="pq-shell"><p class="pq-empty">文献加载失败，请刷新后重试。</p></div>';
+   });
+   return;
+ }
+
  if(view==='milestones'){
    el.innerHTML='<div class="panel">正在加载个人里程碑…</div>';
    if(!window.__milestoneLoader)window.__milestoneLoader=import("./milestones.js?v=20261020-m1");
@@ -157,17 +169,6 @@ function renderModule(){
  body='<div class="module-layout"><div class="content-grid"><section class="panel"><h3>我的研究主线</h3><p class="muted small">这些是根据你现有研究方向整理的初始路线，并不意味着所有工作已完成。</p><div class="track-list">'+tracksHTML()+'</div></section><h3>实验记录</h3>'+notesFor('实验')+'</div><aside class="panel"><h3>新增实验记录</h3>'+entryForm('实验','算例与版本：\n本次假设：\n参数与对照：\n结果/误差：\n出现的问题：\n下一步：')+'<p class="memo">建议记录随机种子、代码版本、数据集及评估指标，便于复现实验。</p></aside></div>';
  }else if(view==='questions'){
  body='<div class="module-layout"><div class="content-grid"><h3>研究问题与待验证假设</h3>'+notesFor('问题')+'</div><aside class="panel"><h3>记录一个值得解决的问题</h3>'+entryForm('问题','观察到了什么？\n可能原因是什么？\n怎样设计一次最小验证？')+'<p class="memo">示例：PerTime 的收益来自时间尺度重加权，还是标准化后的函数表示更简单？</p></aside></div>';
- }else if(view==='literature'){
- const arr=papers.slice(0,10);
- const allowedLink=url=>/^https?:\/\//i.test(String(url||''))?String(url):'';
- const renderPaper=p=>{
-   const link=allowedLink(p.url||p.link),pdf=allowedLink(p.pdf_url||p.pdf);
-   const fluid=p.fluid||p.fluid_relevance||'';
-   const fluidLabel=({direct:'流体直接相关',transfer:'可迁移方法',fallback:'纯流体领域'})[fluid]||fluid;
-   const zh=p.abstract_zh||'';
-   return '<article class="row-card" style="padding:18px;border-color:#e5e9df"><div class="row-head"><h3 style="font-size:14px">'+safe(p.title||'未命名论文')+'</h3>'+(fluidLabel?'<span class="pill">'+safe(fluidLabel)+'</span>':'')+'</div><p>'+safe(p.published||'日期未核实')+' · '+safe(p.category||'待分类')+(p.journal?' · '+safe(p.journal):'')+(p.quartile?' · '+safe(p.quartile):'')+'</p><p style="color:#48634f">'+(zh?safe(zh):'<span class="muted">英文原摘要（尚无中文译文）：</span><br>'+safe(truncate(p.abstract||'未提供公开摘要',650)))+'</p><div class="row" style="gap:10px;flex-wrap:wrap">'+(link?'<a href="'+safe(link)+'" target="_blank" rel="noopener noreferrer" class="text-btn">论文来源 ↗</a>':'')+(pdf?'<a href="'+safe(pdf)+'" target="_blank" rel="noopener noreferrer" class="text-btn">PDF ↗</a>':'')+'</div></article>';
- };
- body='<div class="module-layout"><div class="content-grid"><section class="panel"><div class="row-head"><h3>AI × 流体 · 论文日报</h3><span class="panel-caption">私人文献库</span></div><p class="small muted">当前展示已入库的数据。新版 arXiv / Crossref / OpenAlex 双重筛选和逐篇中文摘要翻译尚未连接 WorkBuddy 脚本，不能将现有记录视为今日的 10 篇推荐。</p><div class="content-grid">'+(arr.length?arr.map(renderPaper).join(''):'<p class="empty">尚无已同步论文。待完成私人数据源连接。</p>')+'</div></section></div><aside class="panel"><h3>读完论文，留下一个判断</h3>'+entryForm('文献','论文标题与链接：\\n解决的问题：\\n真正创新点：\\n与我的研究区别：\\n值得复现的实验：')+'</aside></div>';
  }else if(view==='writing'){
  body='<div class="module-layout"><div class="content-grid"><section class="panel"><h3>文章章节进度</h3><div class="track-list">'+db.writing.map((x,i)=>'<div class="track"><span class="track-number">'+(i+1)+'</span><div class="track-text"><strong>'+safe(x.title)+'</strong><p>'+safe(x.detail)+'</p></div>'+statusSelect('writing',x.id,x.status)+'</div>').join('')+'</div></section><h3>写作日志</h3>'+notesFor('写作')+'</div><aside class="panel"><h3>记录写作进展</h3>'+entryForm('写作','今天完成的章节、图表或推导：\n反馈与修改：\n下一步需要解决的论证问题：')+'</aside></div>';
  }else if(view==='growth'){
@@ -210,9 +211,10 @@ async function refreshPapers(){
  try{
    const {data,error}=await session.client.from('phd_private_papers').select('document').eq('id',1).maybeSingle();
    if(error)throw error;
-   papers=Array.isArray(data?.document?.papers)?data.document.papers.slice(0,120):[];
+   paperFeed=data?.document&&typeof data.document==='object'?data.document:{papers:[],today_ids:[]};
+   papers=Array.isArray(paperFeed.papers)?paperFeed.papers.slice(0,120):[];
    if(view==='literature')renderModule();
- }catch(e){console.error('Private literature feed failed',e);papers=[];}
+ }catch(e){console.error('Private literature feed failed',e);paperFeed={papers:[],today_ids:[]};papers=[];if(view==='literature')renderModule();}
 }
 function exportFile(){
  const data=JSON.stringify({...db,exportedAt:new Date().toISOString()},null,2);
