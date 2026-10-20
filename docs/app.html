@@ -4,20 +4,20 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="theme-color" content="#f5f7fb"/>
-<meta name="description" content="PhD Atlas — 博士科研进展与个人成长工作台：日常记录、实验管理、文献雷达、论文写作和里程碑。"/>
-<title>PhD Atlas · 博士科研成长工作台</title>
+<meta name="description" content="日序 Dayflow — 博士科研进展与个人成长工作台：日常记录、实验管理、文献雷达、论文写作和里程碑。"/>
+<title>日序 Dayflow · 博士科研成长工作台</title>
 <link rel="stylesheet" href="./research.css?v=1"/>
 <link rel="stylesheet" href="./projectday.css?v=20261020-pd1"/>
 <link rel="stylesheet" href="./personal-refresh.css?v=20261020-ui1"/>
 <link rel="stylesheet" href="./minimal-home.css?v=20261020-min1"/>
+<link rel="stylesheet" href="./weekboard.css?v=20261020-w1"/>
 </head>
 <body>
 <nav class="atlas-rail" aria-label="工作台快捷导航">
- <a class="atlas-rail-logo" href="./app.html#home" title="PhD Atlas 首页">✳</a>
+ <a class="atlas-rail-logo" href="./app.html#home" title="日序 Dayflow 首页">✳</a>
  <hr />
  <a href="./app.html#home" title="科研与生活首页">⌂</a>
- <a href="./app.html#schedule" title="每日时间表">◷</a>
- <a href="./app.html#projectday" title="科研执行中心">▥</a>
+  <a href="./app.html#projectday" title="科研执行中心">▥</a>
  <a href="./app.html#life" title="生活空间">♡</a>
  <a href="./app.html#vault" title="私人资料库">▣</a>
  <a href="./app.html#literature" title="私人文献雷达">▦</a>
@@ -29,7 +29,7 @@
     <a class="brand" href="./app.html" aria-label="返回博士成长首页">
       <span class="brand-logo">✳</span>
       <span>
-        <span class="brand-title"><h1>PhD Atlas</h1><span class="pill">博士成长工作台</span></span>
+        <span class="brand-title"><h1>日序 Dayflow</h1><span class="pill">个人成长工作台</span></span>
         <span class="brand-sub">科研与生活同行，让成长有迹可循。</span>
       </span>
     </a>
@@ -43,14 +43,14 @@
   <div class="view active" id="dashboardView">
     <main class="home-simple">
       <section class="home-welcome">
-        <div><span class="home-eyebrow">MY DAY · PHD ATLAS</span><h1>今天，也按自己的节奏前进。</h1><p>科研和生活各有空间；首页只记录今天的安排。</p></div>
+        <div><span class="home-eyebrow">MY WEEK · DAYFLOW</span><h1>把这一周，过成自己的节奏。</h1><p>科研和生活各有空间；首页只记录今天的安排。</p></div>
         <time id="homeGreetingDate"></time>
       </section>
       <div class="home-entry-grid" aria-label="主要空间">
         <button type="button" class="home-entry research" data-view="projectday"><span class="home-entry-icon">▥</span><span class="home-entry-label"><strong>科研空间</strong><small>项目 · 实验 · 文献 · 论文</small></span><span class="home-entry-arrow">↗</span></button>
         <button type="button" class="home-entry life" data-view="life"><span class="home-entry-icon">♡</span><span class="home-entry-label"><strong>生活空间</strong><small>习惯 · 日记 · 生活计划</small></span><span class="home-entry-arrow">↗</span></button>
       </div>
-      <div id="homeDaybook" aria-label="今日时间表"></div>
+      <div id="homeDaybook" aria-label="每周时间表"></div>
     </main>
   </div>
   <div class="view" id="moduleView">
@@ -58,7 +58,7 @@
     <div id="moduleNav"></div>
     <div id="moduleContent"></div>
   </div>
-  <footer>PhD Atlas · 科研与生活一起成长　·　科研记录保存于私人数据库，建议定期备份　·　<a href="./app.html#literature" style="color:#6470ba">进入私人文献雷达 ↗</a></footer>
+  <footer>日序 Dayflow · 把生活过成值得回顾的日子　·　科研记录保存于私人数据库，建议定期备份　·　<a href="./app.html#literature" style="color:#6470ba">进入私人文献雷达 ↗</a></footer>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
 <script src="./auth-config.js"></script><style>html{visibility:hidden}</style><script type="module" src="./auth-gate.js"></script>
