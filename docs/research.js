@@ -87,11 +87,6 @@ function addEntry(textValue,kindValue,dateValue){
  db.entries.push({id:uid(),kind:kindValue||kind,date:dateValue||selected,text:t,created:new Date().toISOString()});
  save();return true;
 }
-function appendTask(title,due){
- const s=String(title||'').trim();if(!s){toast('请填写任务内容');return}
- db.tasks.push({id:uid(),title:s.slice(0,400),due: /^\d{4}-\d{2}-\d{2}$/.test(due)?due:TODAY,done:false});
- save();render();toast('已加入科研待办');
-}
 function controls(){
  return '<nav class="navstrip" aria-label="页面导航"><button data-view="dashboard"'+(view==='dashboard'?' class="active"':'')+'>⌂ 首页</button><button data-view="schedule"'+(view==='schedule'?' class="active"':'')+'>◷ 时间表</button><button data-view="projectday"'+(view==='projectday'?' class="active"':'')+'>▥ 科研执行</button><button data-view="life"'+(view==='life'?' class="active"':'')+'>♡ 生活</button><button data-view="vault"'+(view==='vault'?' class="active"':'')+'>▣ 资料库</button><button data-view="experiments"'+(view==='experiments'?' class="active"':'')+'>实验</button><button data-view="literature"'+(view==='literature'?' class="active"':'')+'>文献</button><button data-view="review"'+(view==='review'?' class="active"':'')+'>周复盘</button><button data-view="milestones"'+(view==='milestones'?' class="active"':'')+'>博士路线图</button><button data-view="settings"'+(view==='settings'?' class="active"':'')+'>备份与设置</button></nav>'
 }
@@ -259,14 +254,10 @@ document.addEventListener('change',e=>{
 });
 document.addEventListener('submit',e=>{
  const form=e.target;
- if(!['captureForm','taskForm','reviewForm','outcomeForm'].includes(form.id)&&form.dataset.form!=='module-entry')return;
+ if(!['reviewForm','outcomeForm'].includes(form.id)&&form.dataset.form!=='module-entry')return;
  e.preventDefault();
  const fd=new FormData(form);
- if(form.id==='captureForm'){
-  if(addEntry(fd.get('text'),kind,selected)){$('captureInput').value='';render();toast('已保存到 '+selected+' 的科研日志')}
- }else if(form.id==='taskForm'){
-  appendTask(fd.get('title'),fd.get('due'));form.reset();$('taskDate').value=selected;
- }else if(form.dataset.form==='module-entry'){
+ if(form.dataset.form==='module-entry'){
   if(addEntry(fd.get('text'),form.dataset.kind,fd.get('date'))){render();toast('已保存到科研成长档案')}
  }else if(form.id==='reviewForm'){
   const d={progress:String(fd.get('progress')||'').slice(0,20000),blocker:String(fd.get('blocker')||'').slice(0,20000),next:String(fd.get('next')||'').slice(0,20000),letter:String(fd.get('letter')||'').slice(0,20000)};
