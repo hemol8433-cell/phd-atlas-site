@@ -31,7 +31,7 @@ const defaultState=()=>({version:1,created:TODAY,year:2,entries:[],tasks:[],revi
 function load(){try{
  const saved=window.__phdWorkspaceDocument || null;
  if(!saved||saved.version!==1) return defaultState();
- const base=defaultState();for(const k of ['entries','tasks','achievements'])if(Array.isArray(saved[k]))base[k]=saved[k].slice(0,5000);
+ const base=defaultState();if(saved.projectday && typeof saved.projectday==='object' && !Array.isArray(saved.projectday))base.projectday=saved.projectday;for(const k of ['entries','tasks','achievements'])if(Array.isArray(saved[k]))base[k]=saved[k].slice(0,5000);
  if(saved.reviews&&typeof saved.reviews==='object'&&!Array.isArray(saved.reviews))base.reviews=saved.reviews;
  for(const k of ['tracks','milestones','writing'])if(Array.isArray(saved[k]))base[k]=base[k].map(x=>({...x,...(saved[k].find(v=>v&&v.id===x.id)||{})}));
  if(Number.isInteger(saved.year)&&saved.year>=1&&saved.year<=10)base.year=saved.year;
@@ -87,6 +87,7 @@ function renderDay(){
  $('dayNotes').innerHTML=es.length?es.slice(-3).reverse().map(e=>'<div class="day-note"><strong>'+safe(e.kind)+'：</strong>'+safe(truncate(e.text,90))+'</div>').join(''):'<div class="day-note">这一天尚无记录。一次实验、一篇论文、一个困惑，都值得留下。</div>';
 }
 function renderModules(){const modules=[
+ ['projectday','▥','科研执行中心','项目 · 四象限 · 专注','blue'],
  ['experiments','▤','实验日志','算例 · 方法 · 结果','blue'],
  ['questions','◇','研究问题','假设 · 困惑 · 复现','purple'],
  ['literature','▦','文献雷达','PaperFlow · 每日推荐','green'],
@@ -136,9 +137,10 @@ function appendTask(title,due){
  save();render();toast('已加入科研待办');
 }
 function controls(){
- return '<nav class="navstrip" aria-label="页面导航"><button data-view="dashboard"'+(view==='dashboard'?' class="active"':'')+'>⌂ 成长首页</button><button data-view="experiments"'+(view==='experiments'?' class="active"':'')+'>实验</button><button data-view="literature"'+(view==='literature'?' class="active"':'')+'>文献</button><button data-view="review"'+(view==='review'?' class="active"':'')+'>周复盘</button><button data-view="milestones"'+(view==='milestones'?' class="active"':'')+'>博士路线图</button><button data-view="settings"'+(view==='settings'?' class="active"':'')+'>备份与设置</button></nav>'
+ return '<nav class="navstrip" aria-label="页面导航"><button data-view="dashboard"'+(view==='dashboard'?' class="active"':'')+'>⌂ 成长首页</button><button data-view="projectday"'+(view==='projectday'?' class="active"':'')+'>▥ 科研执行</button><button data-view="experiments"'+(view==='experiments'?' class="active"':'')+'>实验</button><button data-view="literature"'+(view==='literature'?' class="active"':'')+'>文献</button><button data-view="review"'+(view==='review'?' class="active"':'')+'>周复盘</button><button data-view="milestones"'+(view==='milestones'?' class="active"':'')+'>博士路线图</button><button data-view="settings"'+(view==='settings'?' class="active"':'')+'>备份与设置</button></nav>'
 }
 const meta={
+ projectday:['科研执行中心','项目进度、任务优先级、专注投入和每日复盘。'],
  experiments:['实验日志','每次实验的目的、变量、结果、失败原因和下一步都值得追踪。'],
  questions:['研究问题库','把灵感变成假设，把卡住的地方变成可验证的问题。'],
  literature:['文献雷达','保留原 PaperFlow，每日发现与收藏仍然可以使用。'],
@@ -147,7 +149,7 @@ const meta={
  milestones:['博士路线图','关注实际成长与研究成熟度，而不是机械地数毕业倒计时。'],
  review:['每周复盘','每周回顾一次：做成了什么、卡在何处、下一步是什么。'],
  outcomes:['成果档案','成果不仅是论文，也可以是可复现代码、学术报告和重要突破。'],
- settings:['隐私与数据管理','你的成长日志只保存在当前浏览器。请定期导出备份。']
+ settings:['隐私与数据管理','科研成长记录保存在私人云端，请定期导出备份。']
 };
 function notesFor(k){
  const es=db.entries.filter(e=>k==='all'||e.kind===k).slice().reverse().slice(0,20);
@@ -156,6 +158,18 @@ function notesFor(k){
 function entryForm(k,prompt){return '<form class="form-stack" data-form="module-entry" data-kind="'+k+'"><label>记录时间</label><input name="date" type="date" value="'+selected+'" required/><label>记录内容</label><textarea name="text" required maxlength="12000" placeholder="'+safe(prompt)+'"></textarea><button type="submit">保存到我的科研日志</button></form>'}
 function renderModule(){
  const el=$('moduleContent');
+ if(view==='projectday'){
+   el.innerHTML='<section class="panel"><h3>正在加载科研执行中心…</h3></section>';
+   if(!window.__projectDayLoader)window.__projectDayLoader=import("./projectday.js?v=20261020-pd1");
+   window.__projectDayLoader.then(mod=>{
+     if(view==='projectday')mod.renderProjectDay(el,{data:()=>db,save,toast});
+   }).catch(error=>{
+     console.error("ProjectDay failed to load",error);
+     if(view==='projectday')el.innerHTML='<section class="panel"><h3>执行中心加载失败</h3><p>请刷新页面重试。</p></section>';
+   });
+   return;
+ }
+
  const h=meta[view]||meta.experiments;
  let body='';
  if(view==='experiments'){
