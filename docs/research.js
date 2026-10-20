@@ -70,7 +70,11 @@ function statusSelect(which,id,current){return '<select data-status="'+which+'" 
 function tracksHTML(){return db.tracks.map((x,i)=>'<div class="track"><span class="track-number">0'+(i+1)+'</span><div class="track-text"><strong>'+safe(x.title)+'</strong><p>'+safe(x.detail)+'</p></div>'+statusSelect('tracks',x.id,x.status)+'</div>').join('')}
 function renderDashboard(){
   $('profileYear').textContent='我的空间';
-  $('homeGreetingDate').textContent=verboseDate(TODAY);
+  if(!window.__homeAtmosphereLoader)window.__homeAtmosphereLoader=import("./home-atmosphere.js?v=20261020-h1");
+  window.__homeAtmosphereLoader.then(m=>m.mountHomeAtmosphere()).catch(error=>{
+    console.warn("Home atmosphere unavailable",error);
+    $('homeGreetingDate').textContent=verboseDate(iso(new Date()));
+  });
   const root=$('homeDaybook');
   if(!window.__weekboardLoader)window.__weekboardLoader=import("./weekboard.js?v=20261020-w2");
   window.__weekboardLoader.then(mod=>{
@@ -188,6 +192,7 @@ function dayWeekStats(start){
  return '<div class="content-grid"><div class="row-card"><h3>'+es.length+' 条科研日志</h3><p>实验 '+es.filter(x=>x.kind==='实验').length+' · 文献 '+es.filter(x=>x.kind==='文献').length+' · 成长 '+es.filter(x=>x.kind==='成长').length+'</p></div><div class="row-card"><h3>'+db.tasks.filter(t=>t.due>=start&&t.due<=end&&t.done).length+' 项本周完成任务</h3><p>不求每天产出很多，重要的是持续积累。</p></div></div>';
 }
 function render(){
+ document.body.classList.toggle('home-atmosphere-active',view==='dashboard');
  $('dashboardView').classList.toggle('active',view==='dashboard');
  $('moduleView').classList.toggle('active',view!=='dashboard');
  $('homeNav').classList.toggle('hidden',view==='dashboard');
