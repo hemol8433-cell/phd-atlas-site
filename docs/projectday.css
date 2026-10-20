@@ -106,3 +106,29 @@
 @media(max-width:1200px){.pd-top-grid,.pd-day-grid,.pd-project-grid{grid-template-columns:1fr}.pd-manual{grid-template-columns:1fr 95px 145px}}
 @media(max-width:750px){.pd-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.pd-matrix,.pd-bottom-grid{grid-template-columns:1fr}.pd-task-form{grid-template-columns:1fr 1fr}.pd-task-form input[name=title]{grid-column:1/-1}.pd-title-line{flex-wrap:wrap}.pd-header{flex-wrap:wrap}}
 @media(max-width:450px){.pd-header h2{font-size:22px}.pd-panel{padding:14px}.pd-stats b{font-size:20px}.pd-week-nav span{font-size:10px}.pd-project-form{grid-template-columns:1fr 1fr}.pd-project-form input[name=title],.pd-project-form textarea{grid-column:1/-1}.pd-project-form button{grid-column:1/-1}.pd-manual{grid-template-columns:1fr 1fr}.pd-manual label,.pd-manual select,.pd-manual input[name=note]{grid-column:1/-1}.pd-log{grid-template-columns:70px 1fr 67px 16px;gap:5px}}
+
+/* Editable progress journal for each research project. */
+.pd-project-progress-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding-top:10px;border-top:1px solid #e9edf4}
+.pd-project-progress-toolbar>span{font-size:10px;color:#8794a8}
+.pd-project-progress-toolbar>button{border:1px solid #dce4f2;background:#f3f6ff;color:#5869bb;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:720;white-space:nowrap}
+.pd-progress-empty{font-size:10px;color:#a0aabd;margin:9px 0 1px}
+.pd-progress-history{margin-top:8px}
+.pd-progress-history>summary{cursor:pointer;list-style-position:inside;color:#7e8aa2;font-size:10px;padding:4px 0}
+.pd-progress-list{display:grid;gap:8px;margin-top:7px}
+.pd-progress-note{border:1px solid #e6eaf3;background:#fff;border-radius:9px;padding:10px 11px;min-width:0}
+.pd-progress-note>header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pd-progress-note time{font-size:10px;color:#8594b0;font-variant-numeric:tabular-nums}
+.pd-progress-note header>div{display:flex;gap:8px}
+.pd-progress-note header button{border:0;background:transparent;color:#8290b0;font-size:10px;padding:3px}
+.pd-progress-note>p{font-size:11px;line-height:1.75;color:#4b5b73;white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0 0}
+.pd-progress-note>small{display:block;border-top:1px solid #edf0f6;margin-top:8px;padding-top:7px;font-size:10px;line-height:1.65;color:#8a96ad;white-space:pre-wrap;overflow-wrap:anywhere}
+.pd-progress-note>small b{color:#6476bc;font-weight:750}
+.pd-progress-more{font-size:10px;color:#a0aabd;margin:1px 0 0}
+.pd-progress-form{display:grid;gap:9px;background:#f8faff;border:1px solid #dfe6f5;border-radius:11px;padding:12px;margin-top:10px}
+.pd-progress-form>label{display:grid;gap:6px;color:#667696;font-size:11px;font-weight:720}
+.pd-progress-form input,.pd-progress-form textarea{width:100%;min-width:0;border:1px solid #dce4f1;border-radius:8px;background:#fff;color:#34435b;padding:9px 10px;font:inherit;font-size:12px}
+.pd-progress-form textarea{resize:vertical;line-height:1.7}
+.pd-progress-actions{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.pd-progress-actions button{border:1px solid #dce4ef;background:#fff;color:#75839d;border-radius:8px;padding:8px 12px;font-size:11px}
+.pd-progress-actions button.pd-primary{background:#5667cb!important;color:#fff!important}
+@media(max-width:450px){.pd-project-progress-toolbar{align-items:flex-start}.pd-progress-form{padding:10px}.pd-progress-note{padding:9px}}
