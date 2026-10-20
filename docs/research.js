@@ -27,11 +27,11 @@ const writingDefault=[
  {id:'results',title:'Experiments & Results',detail:'四种预处理与正反例分析',status:'计划中'},
  {id:'discussion',title:'Discussion & Limitations',detail:'适用条件、失效场景、敏感性',status:'计划中'}
 ];
-const defaultState=()=>({version:1,created:TODAY,year:2,entries:[],tasks:[],reviews:{},achievements:[],tracks:topics.map(x=>({...x})),milestones:chapterDefault.map(x=>({...x})),writing:writingDefault.map(x=>({...x}))});
+const defaultState=()=>({version:1,created:TODAY,year:2,entries:[],tasks:[],reviews:{},achievements:[],tracks:topics.map(x=>({...x})),milestones:chapterDefault.map(x=>({...x})),writing:writingDefault.map(x=>({...x})),daybook:[]});
 function load(){try{
  const saved=window.__phdWorkspaceDocument || null;
  if(!saved||saved.version!==1) return defaultState();
- const base=defaultState();if(saved.projectday && typeof saved.projectday==='object' && !Array.isArray(saved.projectday))base.projectday=saved.projectday;
+ const base=defaultState();if(Array.isArray(saved.daybook))base.daybook=saved.daybook.slice(0,5000);if(saved.projectday && typeof saved.projectday==='object' && !Array.isArray(saved.projectday))base.projectday=saved.projectday;
  if(saved.life && typeof saved.life==='object' && !Array.isArray(saved.life))base.life=saved.life;
  if(Array.isArray(saved.vaultFiles))base.vaultFiles=saved.vaultFiles.slice(0,5000);for(const k of ['entries','tasks','achievements'])if(Array.isArray(saved[k]))base[k]=saved[k].slice(0,5000);
  if(saved.reviews&&typeof saved.reviews==='object'&&!Array.isArray(saved.reviews))base.reviews=saved.reviews;
@@ -65,68 +65,20 @@ function getWeek(){return addDays(monday(TODAY),7*weekOffset)}
 function stats(){return {entries:db.entries.length,tasks:db.tasks.length,done:db.tasks.filter(x=>x.done).length,achievements:db.achievements.length}}
 let toastTimer;function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2900)}
 function counts(date){return{n:db.entries.filter(x=>x.date===date).length,t:db.tasks.filter(x=>x.due===date).length}}
-function renderCalendar(){
- $('monthLabel').textContent=displayMonth.getFullYear()+'年 '+String(displayMonth.getMonth()+1).padStart(2,'0')+'月';
- const y=displayMonth.getFullYear(),m=displayMonth.getMonth(),days=new Date(y,m+1,0).getDate(),offset=(new Date(y,m,1).getDay()+6)%7;
- let html=['一','二','三','四','五','六','日'].map(d=>'<div class="weekday">'+d+'</div>').join('');
- for(let i=0;i<offset;i++)html+='<div></div>';
- for(let d=1;d<=days;d++){
-  const v=iso(new Date(y,m,d)), c=counts(v);
-  html+='<button class="calendar-cell'+(v===TODAY?' today':'')+(v===selected?' selected':'')+'" data-date="'+v+'" aria-label="'+safe(v)+'">'+d+'<span class="cal-dots">'+(c.n?'<i class="green"></i>':'')+(c.t?'<i></i>':'')+'</span></button>';
- }
- $('calendarGrid').innerHTML=html;
- renderDay();
-}
-function entryHTML(e){return '<div class="journal-item"><div class="journal-item-top"><span class="journal-date">'+safe(e.kind)+' · '+labelDate(e.date)+'</span><button data-act="delete-entry" data-id="'+safe(e.id)+'" title="删除">×</button></div><div class="journal-text">'+safe(truncate(e.text,155))+'</div></div>'}
-function renderInbox(){
- const sorted=[...db.entries].sort((a,b)=>(b.created||b.date).localeCompare(a.created||a.date)).slice(0,3);
- $('quickEntries').innerHTML=sorted.length?sorted.map(entryHTML).join(''):'<p class="empty">还没有记录。第一条可以写今天想明白的问题。</p>';
-}
-function renderDay(){
- $('dayTitle').textContent=verboseDate(selected);
- const es=db.entries.filter(e=>e.date===selected),ts=db.tasks.filter(x=>x.due===selected);
- $('dayCount').textContent=es.length+' 条日志 · '+ts.length+' 项任务';
- $('dayNotes').innerHTML=es.length?es.slice(-3).reverse().map(e=>'<div class="day-note"><strong>'+safe(e.kind)+'：</strong>'+safe(truncate(e.text,90))+'</div>').join(''):'<div class="day-note">这一天尚无记录。一次实验、一篇论文、一个困惑，都值得留下。</div>';
-}
-function renderModules(){const modules=[
- ['projectday','▥','科研执行中心','项目 · 四象限 · 专注','blue'],
- ['life','♡','生活空间','习惯 · 心情 · 日记','green'],
- ['vault','▣','我的资料库','图片 · PDF · 文档','amber'],
- ['experiments','▤','实验日志','算例 · 方法 · 结果','blue'],
- ['questions','◇','研究问题','假设 · 困惑 · 复现','purple'],
- ['literature','▦','文献雷达','PaperFlow · 每日推荐','green'],
- ['writing','✎','论文写作','章节 · 图表 · 投稿','amber'],
- ['growth','✳','技能与成长','学习 · 感悟 · 心态','moss'],
- ['milestones','◉','博士路线图','阶段目标 · 里程碑','slate'],
- ['review','◷','每周复盘','进展 · 阻碍 · 下周','cyan'],
- ['outcomes','♜','成果档案','论文 · 报告 · 突破','rose']
- ];
- $('moduleTiles').innerHTML=modules.map(m=>'<button class="module-tile '+m[4]+'" data-view="'+m[0]+'"><span class="tile-top"><span class="tile-icon">'+m[1]+'</span><strong>'+m[2]+'</strong></span><span>'+m[3]+'</span></button>').join('');
-}
-function renderWeek(){
- const mon=getWeek();
- $('weekRange').textContent=labelDate(mon)+' — '+labelDate(addDays(mon,6))+' · '+dateObj(mon).getFullYear()+' 年';
- const dayLabels=['周一','周二','周三','周四','周五','周六','周日'];
- $('weekDays').innerHTML=dayLabels.map((name,i)=>{
- const d=addDays(mon,i),n=counts(d);
- return '<button class="week-day'+(d===selected?' selected':'')+'" data-date="'+d+'"><strong>'+name+'</strong><b>'+labelDate(d)+'</b><span>'+(n.n?n.n+' 条日志':'待记录')+(n.t?' · '+n.t+'任务':'')+'</span></button>';
- }).join('');
-}
 function statusSelect(which,id,current){return '<select data-status="'+which+'" data-id="'+safe(id)+'" aria-label="更新进度">'+statusOptions.map(x=>'<option value="'+x+'"'+(x===current?' selected':'')+'>'+x+'</option>').join('')+'</select>'}
 function tracksHTML(){return db.tracks.map((x,i)=>'<div class="track"><span class="track-number">0'+(i+1)+'</span><div class="track-text"><strong>'+safe(x.title)+'</strong><p>'+safe(x.detail)+'</p></div>'+statusSelect('tracks',x.id,x.status)+'</div>').join('')}
-function renderTracks(){$('trackList').innerHTML=tracksHTML()}
-function renderTasks(){
- const arr=[...db.tasks].sort((a,b)=>(a.done?1:0)-(b.done?1:0)||a.due.localeCompare(b.due));
- $('taskList').innerHTML=arr.length?arr.slice(0,9).map(t=>'<div class="task-item'+(t.done?' done':'')+'"><input type="checkbox" data-act="toggle-task" data-id="'+safe(t.id)+'"'+(t.done?' checked':'')+' aria-label="完成任务"/><span>'+safe(t.title)+'</span><small>'+safe(labelDate(t.due))+'</small><button data-act="delete-task" data-id="'+safe(t.id)+'" title="删除任务">×</button></div>').join(''):'<div class="empty">从一件可完成的小事开始。</div>';
- const s=stats();$('taskMetric').textContent=s.done+'/'+s.tasks+' 项任务完成';
+function renderDashboard(){
+  $('profileYear').textContent='博士第 '+db.year+' 年';
+  $('homeGreetingDate').textContent=verboseDate(TODAY);
+  const root=$('homeDaybook');
+  if(!window.__daybookLoader)window.__daybookLoader=import("./daybook.js?v=20261020-min1");
+  window.__daybookLoader.then(mod=>{
+    if(view==='dashboard')mod.renderDaybook(root,{data:()=>db,save,toast},{compact:true});
+  }).catch(error=>{
+    console.error('Daybook could not load',error);
+    if(view==='dashboard')root.innerHTML='<p class="empty">今日时间表暂时无法加载，请刷新页面。</p>';
+  });
 }
-function renderMetrics(){const s=stats();
- $('entryMetric').textContent=s.entries+' 条科研记录';
- $('growthMetric').textContent='博士第 '+db.year+' 年';
- $('outcomeMetric').textContent=s.achievements+' 项成果';
- $('profileYear').textContent='博士第 '+db.year+' 年';
-}
-function renderDashboard(){renderCalendar();renderInbox();renderModules();renderWeek();renderTracks();renderTasks();renderMetrics()}
 function uid(){return Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7)}
 function addEntry(textValue,kindValue,dateValue){
  const t=String(textValue||'').trim();
@@ -141,9 +93,10 @@ function appendTask(title,due){
  save();render();toast('已加入科研待办');
 }
 function controls(){
- return '<nav class="navstrip" aria-label="页面导航"><button data-view="dashboard"'+(view==='dashboard'?' class="active"':'')+'>⌂ 成长首页</button><button data-view="projectday"'+(view==='projectday'?' class="active"':'')+'>▥ 科研执行</button><button data-view="life"'+(view==='life'?' class="active"':'')+'>♡ 生活</button><button data-view="vault"'+(view==='vault'?' class="active"':'')+'>▣ 资料库</button><button data-view="experiments"'+(view==='experiments'?' class="active"':'')+'>实验</button><button data-view="literature"'+(view==='literature'?' class="active"':'')+'>文献</button><button data-view="review"'+(view==='review'?' class="active"':'')+'>周复盘</button><button data-view="milestones"'+(view==='milestones'?' class="active"':'')+'>博士路线图</button><button data-view="settings"'+(view==='settings'?' class="active"':'')+'>备份与设置</button></nav>'
+ return '<nav class="navstrip" aria-label="页面导航"><button data-view="dashboard"'+(view==='dashboard'?' class="active"':'')+'>⌂ 首页</button><button data-view="schedule"'+(view==='schedule'?' class="active"':'')+'>◷ 时间表</button><button data-view="projectday"'+(view==='projectday'?' class="active"':'')+'>▥ 科研执行</button><button data-view="life"'+(view==='life'?' class="active"':'')+'>♡ 生活</button><button data-view="vault"'+(view==='vault'?' class="active"':'')+'>▣ 资料库</button><button data-view="experiments"'+(view==='experiments'?' class="active"':'')+'>实验</button><button data-view="literature"'+(view==='literature'?' class="active"':'')+'>文献</button><button data-view="review"'+(view==='review'?' class="active"':'')+'>周复盘</button><button data-view="milestones"'+(view==='milestones'?' class="active"':'')+'>博士路线图</button><button data-view="settings"'+(view==='settings'?' class="active"':'')+'>备份与设置</button></nav>'
 }
 const meta={
+ schedule:['每日时间表','科研和生活共用一张时间表，补记每一天几点到几点做了什么。'],
  projectday:['科研执行中心','项目进度、任务优先级、专注投入和每日复盘。'],
  life:['生活空间','在科研之外，也记录自己的日常节奏、习惯、心情和生活计划。'],
  vault:['私人资料库','图片、文档、PDF 和研究材料保存在受保护的云端，支持跨设备读取。'],
@@ -164,6 +117,18 @@ function notesFor(k){
 function entryForm(k,prompt){return '<form class="form-stack" data-form="module-entry" data-kind="'+k+'"><label>记录时间</label><input name="date" type="date" value="'+selected+'" required/><label>记录内容</label><textarea name="text" required maxlength="12000" placeholder="'+safe(prompt)+'"></textarea><button type="submit">保存到我的科研日志</button></form>'}
 function renderModule(){
  const el=$('moduleContent');
+ if(view==='schedule'){
+   el.innerHTML='<div class="db-standalone"><p class="empty">正在加载每日时间表…</p></div>';
+   if(!window.__daybookLoader)window.__daybookLoader=import("./daybook.js?v=20261020-min1");
+   window.__daybookLoader.then(mod=>{
+     if(view==='schedule')mod.renderDaybook(el,{data:()=>db,save,toast},{compact:false});
+   }).catch(error=>{
+     console.error('Daybook could not load',error);
+     if(view==='schedule')el.innerHTML='<p class="empty">时间表暂时无法加载，请刷新重试。</p>';
+   });
+   return;
+ }
+
  if(view==='life' || view==='vault'){
    el.innerHTML='<section class="panel"><h3>正在加载私人空间…</h3></section>';
    const isLife=view==='life';
@@ -312,12 +277,7 @@ document.addEventListener('submit',e=>{
   save();render();toast('已加入成果档案');
  }
 });
-$('captureTags').innerHTML=['实验','文献','问题','写作','成长','灵感'].map(x=>'<button type="button" class="tag-choice'+(x===kind?' active':'')+'" data-kind="'+x+'">'+x+'</button>').join('');
-$('selectedDate').textContent=verboseDate(TODAY);
 $('topDate').textContent=verboseDate(TODAY);
-$('taskDate').value=TODAY;
-$('introDate').textContent='今天是 '+verboseDate(TODAY);
-$('todayBtn').addEventListener('click',()=>{selected=TODAY;displayMonth=new Date(now.getFullYear(),now.getMonth(),1);weekOffset=0;render()});
 const h=window.location.hash.replace('#','');if(meta[h])view=h;
 window.addEventListener('hashchange',()=>{const next=window.location.hash.slice(1);if(next==='home'||next==='dashboard')view='dashboard';else if(meta[next])view=next;render()});
 render();refreshPapers();
