@@ -20,6 +20,8 @@ jobs:
           node --check docs/auth-config.js
       - name: Test login session states
         run: node tests/auth-session.mjs
+      - name: Test ProjectDay workflows
+        run: node tests/projectday.mjs
       - name: Validate public/private file boundary
         run: |
           python - <<'PY'
