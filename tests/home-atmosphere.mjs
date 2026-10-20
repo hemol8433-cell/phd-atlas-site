@@ -47,7 +47,7 @@ try{
  atmosphere.mountHomeAtmosphere();
  assert.equal(timers,1,"Homepage updates should only install one interval");
  assert(title.textContent.length>5);
- assert(label.textContent.includes("DAYFLOW"));
+ assert(label.textContent.includes("SUIXU"));
  assert(/年.*月.*日/.test(date.textContent));
  assert(["morning","midday","afternoon","evening","night"].includes(body.dataset.daypart));
 }finally{
