@@ -1,4 +1,4 @@
-# PhD Atlas · Public Login Site
+# 日序 Dayflow · Public Login Site
 
 This repository contains **only the public web client** and the login interface for a single-owner PhD research workspace. It **does not** include journals, experiments, private recommendations, or service-role credentials.
 
@@ -21,8 +21,22 @@ The GitHub OAuth application Authorization callback URL remains `https://zsqbubj
 - Max single file size: **25 MiB**. Supported: JPG, PNG, WebP, GIF, PDF, Word, Excel, PowerPoint, TXT, MD and CSV. Image and PDF previews are authenticated downloads; Word/Excel are downloadable.
 - All main workspace and Life Space data is saved in `public.phd_workspace_state.document`, so it follows the same GitHub sign-in across devices once saved. Files are physically stored in Supabase Storage; their display names are in `document.vaultFiles`.
 - Existing legacy PaperFlow browser-local bookmarks and notes are not automatically migrated.
-- Exported PhD Atlas JSON backups contain text and metadata **but not binary uploaded files**. Download critical attachments separately.
+- Exported 日序 Dayflow JSON backups contain text and metadata **but not binary uploaded files**. Download critical attachments separately.
 - No banking connections or medical advice are provided; spending, sleep and mood values are manually entered.
 - Browser-side upload/download with the owner's OAuth session has not been end-to-end tested in a real browser. Do not claim a successful live upload until tested.
 
 The public repository contains only client code, publishable Supabase configuration and UI. It contains no private documents or server-side secrets.
+
+## Weekly calendar and cross-module synchronization
+
+Dayflow is a **private personal workspace for research and life**, rather than a PhD-only application. The public GitHub Pages site contains only the login client and interface code.
+
+- There is **no separate schedule module**: the **Monday-to-Sunday weekboard** is the main homepage feature.
+- `docs/weekboard.js` reads manual timetable entries in `phd_workspace_state.document.daybook`, plus source research focus sessions, life focus sessions, and timestamped activity events, all without exposing personal data in the public repository.
+- Start, pause, and save research focus in ProjectDay; pending segments display as ongoing/paused. Saved sessions display their real time intervals, including midnight-spanning splits. Manual time logging without exact start shows only a duration, **never a fabricated clock time**.
+- Life habit check-ins, daily journaling, and life task completions are displayed as timestamped moments, **not made-up durations**. Life Space also has a focus timer with true session time intervals.
+- Legacy `docs/daybook.js` is kept for historical compatibility and migration tests but is not exposed as another navigation page.
+- Source documents, personal records, and attachment bytes are stored only in the authenticated private Supabase project.
+- Old OAuth App configuration can continue working even if the website's displayed name changes; to rename the GitHub authorization dialog too, change the OAuth application's display name manually in GitHub Developer Settings.
+
+**AI×Fluid literature ingestion is not yet connected to WorkBuddy**. The current private Supabase paper feed is older PINN data, not a verified new daily AI×fluid digest. The full requested WorkBuddy script/database pipeline is preserved in the private source repository's `WORKBUDDY_AI_FLUID_PAPER_BRIDGE.md`; no WorkBuddy daily counts or successful imports should be claimed until externally verified.
