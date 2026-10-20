@@ -16,7 +16,11 @@ const db={version:1,entries:[{id:"existing"}],milestones:saved,life:{habits:[]}}
 const snapshots=[];
 const api={data:()=>db,save:()=>snapshots.push(structuredClone(db)),toast:()=>{}};
 const root={innerHTML:"",contains:()=>true,querySelector:()=>null};
-const click=(act,id)=>root.onclick({target:{closest:()=>({dataset:{msAction:act,id}})}});
+const click=(act,id,noteId)=>root.onclick({target:{closest:()=>({dataset:{msAction:act,id,noteId}})}});
+const reflect=(id,values)=>{
+ const form={dataset:{msReflection:id},values,closest:(selector)=>selector==="[data-ms-reflection]"?form:null};
+ root.onsubmit({target:form,preventDefault(){}});
+};
 const submit=values=>root.onsubmit({target:{id:"milestoneForm",values},preventDefault(){}});
 try{
  mod.renderMilestones(root,api);
@@ -31,6 +35,18 @@ try{
  submit({title:"提交 PINN 论文",category:"科研",detail:"达到可复现标准",due:"2027-02-01",status:"进行中",progress:"65"});
  assert.equal(db.milestones.length,3);
  assert.equal(db.milestones.at(-1).title,"提交 PINN 论文");
+ click("reflect",created.id);
+ assert.match(root.innerHTML,/这一阶段，你有什么感悟/);
+ reflect(created.id,{date:"2026-10-20",type:"阶段感悟",text:"我发现：失败的实验也是有价值的证据。"});
+ assert.equal(db.milestones.at(-1).reflections.length,1,"First reflection saved");
+ assert.match(root.innerHTML,/成长感悟 · 1 条/);
+ const reflectionId=db.milestones.at(-1).reflections[0].id;
+ click("edit-reflection",created.id,reflectionId);
+ assert.match(root.innerHTML,/保存修改/);
+ reflect(created.id,{date:"2026-10-21",type:"阶段感悟",text:"需要把时间变换和 PDE 一致性说清楚。"});
+ assert.equal(db.milestones.at(-1).reflections.length,1,"Editing should not duplicate reflection");
+ assert.equal(db.milestones.at(-1).reflections[0].date,"2026-10-21");
+ assert.equal(mod.normalizeMilestones(db.milestones).at(-1).reflections[0].text,"需要把时间变换和 PDE 一致性说清楚。","Reflections survive loading a previous saved milestone document");
  click("toggle",created.id);
  assert.equal(db.milestones.at(-1).status,"已完成");
  assert.equal(db.milestones.at(-1).progress,100);
@@ -38,12 +54,20 @@ try{
  click("toggle",created.id);
  assert.equal(db.milestones.at(-1).status,"进行中");
  assert.equal(db.milestones.at(-1).completedAt,"");
+ click("reflect",created.id);
+ reflect(created.id,{date:"2026-10-22",type:"达成感悟",text:"这是完成目标后的第二条感悟。"});
+ assert.equal(db.milestones.at(-1).reflections.length,2,"Multiple reflections per milestone");
+ assert.equal(db.milestones.at(-1).reflections[1].type,"达成感悟");
+ click("delete-reflection",created.id,reflectionId);
+ assert.equal(db.milestones.at(-1).reflections.length,1,"Delete only selected reflection");
+ assert.equal(db.milestones.at(-1).reflections[0].type,"达成感悟");
+ assert.equal(db.milestones[0].reflections.length,0,"Old goals without a reflection array remain valid");
  click("delete","paper");
  assert.equal(db.milestones.length,2);
  assert.equal(db.entries[0].id,"existing");
  assert(db.milestones.some(x=>x.id==="lifestyle"),"Existing personal goals remain");
  assert(snapshots.length>=5);
- console.log("PASS: milestone migration, create/edit/complete/reopen/delete and owner workspace preservation");
+ console.log("PASS: milestone CRUD, dated reflection append/edit/delete, cloud persistence and legacy records");
 }finally{
  globalThis.FormData=original.FormData;globalThis.confirm=original.confirm;
 }
