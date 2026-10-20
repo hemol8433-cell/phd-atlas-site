@@ -92,7 +92,7 @@ export function renderMilestones(root,api){
   }
   if(action==="toggle"){
    if(obj.status==="已完成"){obj.status="进行中";obj.completedAt="";obj.progress=Math.min(95,obj.progress||0);}
-   else {obj.status="已完成";obj.completedAt=DAY();obj.progress=100;}
+   else {obj.status="已完成";obj.completedAt=DAY();obj.progress=100;reflectionTarget=id;reflectionEditId=null;}
    persist();refresh();
   }
  };
