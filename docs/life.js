@@ -100,6 +100,9 @@ export function renderLife(root,api){
   const map={"remove-habit":"habits","remove-todo":"todos","remove-expense":"expenses"},field=map[btn.dataset.lfAct];
   if(!field||!confirm("确定删除这条记录吗？"))return;
   s[field]=s[field].filter(x=>x.id!==btn.dataset.id);
+  if(field==="habits")d.activityEvents=(d.activityEvents||[]).filter(x=>!String(x.id||"").endsWith(":"+btn.dataset.id)||!String(x.id||"").startsWith("life-habit:"));
+  if(field==="todos")d.activityEvents=(d.activityEvents||[]).filter(x=>x.id!=="life-task:"+btn.dataset.id);
+  if(field==="expenses")d.activityEvents=(d.activityEvents||[]).filter(x=>x.id!=="life-expense:"+btn.dataset.id);
   save();redraw();
  };
  root.onsubmit=event=>{
