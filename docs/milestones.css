@@ -47,3 +47,27 @@
 .ms-empty{text-align:center;padding:37px 10px;color:#9ead9f;font-size:12px}
 @media(max-width:970px){.ms-body{grid-template-columns:1fr}.ms-hero{flex-direction:column;align-items:flex-start}.ms-metrics{width:100%}.ms-metrics div{flex:1}}
 @media(max-width:480px){.ms-list,.ms-editor{padding:15px}.ms-two{grid-template-columns:1fr}.ms-metrics strong{font-size:18px}}
+
+/* Reflection journal, tucked inside each milestone instead of another crowded module. */
+.ms-actions{flex-wrap:wrap}
+.ms-actions .ms-write-reflection{margin-right:auto;background:#e8eebd;color:#4d6749;font-weight:750}
+.ms-reflections{margin-top:10px}
+.ms-note-history{border-top:1px solid #e8eee4;padding-top:11px}
+.ms-note-history>summary{font-size:11px;color:#6c856e;cursor:pointer;list-style-position:inside;font-weight:750}
+.ms-note-list{display:grid;gap:9px;margin-top:10px}
+.ms-note{background:#fff;border:1px solid #e6ece3;border-radius:10px;padding:11px 12px}
+.ms-note-header{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ms-note-kind{font-size:10px;color:#6f8d6b;background:#eef5e8;border-radius:5px;padding:3px 7px}
+.ms-note time{font-size:10px;color:#96a599}
+.ms-note-actions{display:flex;gap:6px;margin-left:auto}
+.ms-note-actions button{border:0;background:transparent;color:#8c9c8e;font-size:10px;padding:3px 6px}
+.ms-note p{font-size:12px;line-height:1.75;white-space:pre-wrap;color:#526653;margin:9px 0 1px;overflow-wrap:anywhere}
+.ms-reflection-form{margin-top:12px;display:grid;gap:11px;border:1px solid #e5ecd9;border-radius:12px;background:#fcfdf6;padding:13px}
+.ms-reflection-form label{display:grid;gap:6px;color:#637d65;font-size:11px;font-weight:750}
+.ms-reflection-form input,.ms-reflection-form select,.ms-reflection-form textarea{width:100%;border:1px solid #dfe9d8;border-radius:8px;padding:9px;color:#425644;font:inherit;font-size:12px;background:white;min-width:0}
+.ms-reflection-form textarea{resize:vertical;line-height:1.75;min-height:88px}
+.ms-note-inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ms-note-save{display:flex;gap:8px;justify-content:flex-end}
+.ms-note-save button{border:1px solid #dde6d5;border-radius:9px;padding:8px 13px;background:#f1f5e9;color:#658064;font-size:11px}
+.ms-note-save .ms-save{background:#e8edb1;border-color:#e8edb1;color:#4c6445;font-weight:770}
+@media(max-width:480px){.ms-note-inputs{grid-template-columns:1fr}.ms-reflection-form{padding:11px}.ms-note-actions{margin-left:0}}
