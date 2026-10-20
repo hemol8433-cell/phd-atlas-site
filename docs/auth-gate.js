@@ -23,7 +23,7 @@ try {
     document.querySelector(".header-right")?.prepend(btn);
     document.documentElement.style.visibility = "visible";
     const script = document.createElement("script");
-    script.src = "./research.js?v=20261020-milestones-1";
+    script.src = "./research.js?v=20261020-paper-inbox-1";
     script.defer = true;
     document.body.appendChild(script);
   }
