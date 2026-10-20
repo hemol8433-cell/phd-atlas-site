@@ -115,7 +115,7 @@ function renderModule(){
    el.innerHTML='<section class="panel"><h3>正在加载私人空间…</h3></section>';
    const isLife=view==='life';
    const key=isLife?'__lifeLoader':'__vaultLoader';
-   if(!window[key])window[key]=import(isLife?'./life.js?v=20261020-l2':'./vault.js?v=20261020-v1');
+   if(!window[key])window[key]=import(isLife?'./life.js?v=20261020-l3':'./vault.js?v=20261020-v1');
    window[key].then(mod=>{
      if(view!==(isLife?'life':'vault'))return;
      const api={data:()=>db,save,toast,session};
