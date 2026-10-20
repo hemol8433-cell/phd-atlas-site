@@ -17,6 +17,8 @@ jobs:
           node --check docs/auth-gate.js
           node --check docs/login.js
           node --check docs/auth-config.js
+      - name: Test login session states
+        run: node tests/auth-session.mjs
       - name: Validate public/private file boundary
         run: |
           python - <<'PY'
