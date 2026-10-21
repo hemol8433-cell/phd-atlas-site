@@ -41,7 +41,7 @@ function load(){try{
  return base;
  }catch(e){return defaultState()}}
 let db=load();
-let view='dashboard', kind='实验',selected=TODAY,displayMonth=new Date(now.getFullYear(),now.getMonth(),1),weekOffset=0,papers=[],paperFeed={papers:[],today_ids:[]};
+let view='dashboard', kind='实验',selected=TODAY,displayMonth=new Date(now.getFullYear(),now.getMonth(),1),weekOffset=0,papers=[],paperFeed={papers:[],today_ids:[]},entryEditId=null,outcomeEditId=null,trackEditId=null,writingEditId=null;
 const $=id=>document.getElementById(id);
 let pendingRemoteSave=Promise.resolve();
 function save(){
@@ -111,9 +111,18 @@ const meta={
 };
 function notesFor(k){
  const es=db.entries.filter(e=>k==='all'||e.kind===k).slice().reverse().slice(0,20);
- return es.length?es.map(e=>'<div class="row-card"><div class="row-head"><small class="muted">'+safe(e.date)+' · '+safe(e.kind)+'</small><button class="text-btn" data-act="delete-entry" data-id="'+safe(e.id)+'">删除</button></div><p style="white-space:pre-wrap;color:#364763">'+safe(e.text)+'</p></div>').join(''):'<div class="row-card empty">还没有这一类记录，可以从今天开始。</div>';
+ return es.length?es.map(e=>'<div class="row-card"><div class="row-head"><small class="muted">'+safe(e.date)+' · '+safe(e.kind)+'</small><div><button class="text-btn" data-act="edit-entry" data-id="'+safe(e.id)+'">编辑</button><button class="text-btn" data-act="delete-entry" data-id="'+safe(e.id)+'">删除</button></div></div><p style="white-space:pre-wrap;color:#364763">'+safe(e.text)+'</p></div>').join(''):'<div class="row-card empty">还没有这一类记录，可以从今天开始。</div>';
 }
-function entryForm(k,prompt){return '<form class="form-stack" data-form="module-entry" data-kind="'+k+'"><label>记录时间</label><input name="date" type="date" value="'+selected+'" required/><label>记录内容</label><textarea name="text" required maxlength="12000" placeholder="'+safe(prompt)+'"></textarea><button type="submit">保存到我的科研日志</button></form>'}
+function entryForm(k,prompt){
+ const editing=db.entries.find(e=>e.id===entryEditId&&e.kind===k);
+ return '<form class="form-stack" data-form="module-entry" data-kind="'+k+'"'+(editing?' data-id="'+safe(editing.id)+'"':'')+'><label>记录时间</label><input name="date" type="date" value="'+safe(editing?.date||selected)+'" required/><label>记录内容</label><textarea name="text" required maxlength="12000" placeholder="'+safe(prompt)+'">'+safe(editing?.text||'')+'</textarea><button type="submit">'+(editing?'保存修改':'保存到我的科研日志')+'</button>'+(editing?'<button type="button" data-act="cancel-entry-edit">取消编辑</button>':'')+'</form>';
+}
+function editableTrackRow(x,i,collection){
+ const editing=(collection==='tracks'?trackEditId:writingEditId)===x.id;
+ if(editing)return '<form class="track-edit-form" data-form="edit-track" data-collection="'+collection+'" data-id="'+safe(x.id)+'"><label>名称<input name="title" maxlength="200" required value="'+safe(x.title)+'"/></label><label>说明<textarea name="detail" maxlength="1200" rows="2">'+safe(x.detail||'')+'</textarea></label><div><button type="submit">保存修改</button><button type="button" data-act="cancel-track-edit">取消</button></div></form>';
+ return '<div class="track"><span class="track-number">0'+(i+1)+'</span><div class="track-text"><strong>'+safe(x.title)+'</strong><p>'+safe(x.detail)+'</p></div><button class="text-btn" data-act="edit-track" data-collection="'+collection+'" data-id="'+safe(x.id)+'">编辑内容</button>'+statusSelect(collection,x.id,x.status)+'</div>';
+}
+function tracksHTML(){return db.tracks.map((x,i)=>editableTrackRow(x,i,'tracks')).join('')}
 function renderModule(){
  const el=$('moduleContent');
  if(view==='literature'){
@@ -174,14 +183,15 @@ function renderModule(){
  }else if(view==='questions'){
  body='<div class="module-layout"><div class="content-grid"><h3>研究问题与待验证假设</h3>'+notesFor('问题')+'</div><aside class="panel"><h3>记录一个值得解决的问题</h3>'+entryForm('问题','观察到了什么？\n可能原因是什么？\n怎样设计一次最小验证？')+'<p class="memo">示例：PerTime 的收益来自时间尺度重加权，还是标准化后的函数表示更简单？</p></aside></div>';
  }else if(view==='writing'){
- body='<div class="module-layout"><div class="content-grid"><section class="panel"><h3>文章章节进度</h3><div class="track-list">'+db.writing.map((x,i)=>'<div class="track"><span class="track-number">'+(i+1)+'</span><div class="track-text"><strong>'+safe(x.title)+'</strong><p>'+safe(x.detail)+'</p></div>'+statusSelect('writing',x.id,x.status)+'</div>').join('')+'</div></section><h3>写作日志</h3>'+notesFor('写作')+'</div><aside class="panel"><h3>记录写作进展</h3>'+entryForm('写作','今天完成的章节、图表或推导：\n反馈与修改：\n下一步需要解决的论证问题：')+'</aside></div>';
+ body='<div class="module-layout"><div class="content-grid"><section class="panel"><h3>文章章节进度</h3><div class="track-list">'+db.writing.map((x,i)=>editableTrackRow(x,i,'writing')).join('')+'</div></section><h3>写作日志</h3>'+notesFor('写作')+'</div><aside class="panel"><h3>记录写作进展</h3>'+entryForm('写作','今天完成的章节、图表或推导：\n反馈与修改：\n下一步需要解决的论证问题：')+'</aside></div>';
  }else if(view==='growth'){
  body='<div class="module-layout"><div class="content-grid"><section class="panel"><h3>成长档案 · 博士第 '+db.year+' 年</h3><p>这里不只统计发表成果，更关注你逐渐获得的独立研究能力：发现问题、设计验证、判断结果、表达贡献、面对失败。</p></section>'+notesFor('成长')+'</div><aside class="panel"><h3>记录今天的学习与成长</h3>'+entryForm('成长','今天学会了什么？\n从失败中发现了什么？\n对科研的理解发生了什么变化？')+'</aside></div>';
  }else if(view==='review'){
  const key=getWeek(),end=addDays(key,6),r=db.reviews[key]||{};
  body='<div class="module-layout"><section class="panel"><div class="row-head"><h3>周复盘 · '+labelDate(key)+' — '+labelDate(end)+'</h3><div class="week-switcher"><button class="circle-btn" data-act="prev-week">‹</button><button class="circle-btn" data-act="next-week">›</button></div></div><form class="form-stack review-grid" id="reviewForm"><label>这一周最有价值的进展是什么？</label><textarea name="progress" placeholder="具体到实验、结论、可复现输出……">'+safe(r.progress||'')+'</textarea><label>遇到了什么困难？有哪些问题仍未解决？</label><textarea name="blocker" placeholder="困惑、失败案例、代码问题、研究方向上的犹豫……">'+safe(r.blocker||'')+'</textarea><label>下周最重要的三件事是什么？</label><textarea name="next" placeholder="可执行、可检查，而不是宽泛目标……">'+safe(r.next||'')+'</textarea><label>写给一周后的自己</label><textarea name="letter" placeholder="我希望记住什么？">'+safe(r.letter||'')+'</textarea><button type="submit">保存这一周的复盘</button></form></section><aside class="panel"><h3>本周研究足迹</h3>'+dayWeekStats(key)+'<div class="memo">周复盘以“周一日期”为索引。切换不同周后可以分别填写和查看。</div></aside></div>';
  }else if(view==='outcomes'){
- body='<div class="module-layout"><div class="content-grid"><h3>我的成果时间线</h3>'+(db.achievements.length?[...db.achievements].sort((a,b)=>b.date.localeCompare(a.date)).map(a=>'<div class="row-card"><div class="row-head"><h3>'+safe(a.title)+'</h3><button class="text-btn" data-act="delete-outcome" data-id="'+safe(a.id)+'">删除</button></div><p>'+safe(a.date)+' · '+safe(a.kind)+'</p><p style="white-space:pre-wrap;color:#43536d">'+safe(a.detail||'')+'</p></div>').join(''):'<div class="row-card empty">这里将逐步积累论文、报告、代码、重大发现和科研中的第一次。</div>')+'</div><aside class="panel"><h3>记录一项成果</h3><form class="form-stack" id="outcomeForm"><label>成果名称</label><input name="title" required maxlength="200" placeholder="例如：完成一组关键对照实验"/><label>类别</label><select name="kind"><option>研究突破</option><option>论文与投稿</option><option>代码与数据</option><option>报告与交流</option><option>技能成长</option></select><label>日期</label><input name="date" type="date" value="'+TODAY+'" required/><label>记录意义</label><textarea name="detail" maxlength="8000" placeholder="这件事为什么重要？有哪些可复用的收获？"></textarea><button type="submit">收藏到成长档案</button></form></aside></div>';
+ const outcomeEditing=db.achievements.find(a=>a.id===outcomeEditId);
+ body='<div class="module-layout"><div class="content-grid"><h3>我的成果时间线</h3>'+(db.achievements.length?[...db.achievements].sort((a,b)=>b.date.localeCompare(a.date)).map(a=>'<div class="row-card"><div class="row-head"><h3>'+safe(a.title)+'</h3><div><button class="text-btn" data-act="edit-outcome" data-id="'+safe(a.id)+'">编辑</button><button class="text-btn" data-act="delete-outcome" data-id="'+safe(a.id)+'">删除</button></div></div><p>'+safe(a.date)+' · '+safe(a.kind)+'</p><p style="white-space:pre-wrap;color:#43536d">'+safe(a.detail||'')+'</p></div>').join(''):'<div class="row-card empty">这里将逐步积累论文、报告、代码、重大发现和科研中的第一次。</div>')+'</div><aside class="panel"><h3>'+(outcomeEditing?'编辑成果':'记录一项成果')+'</h3><form class="form-stack" id="outcomeForm"'+(outcomeEditing?' data-id="'+safe(outcomeEditing.id)+'"':'')+'><label>成果名称</label><input name="title" required maxlength="200" placeholder="例如：完成一组关键对照实验" value="'+safe(outcomeEditing?.title||'')+'"/><label>类别</label><select name="kind">'+['研究突破','论文与投稿','代码与数据','报告与交流','技能成长'].map(k=>'<option'+(k===(outcomeEditing?.kind||'研究突破')?' selected':'')+'>'+k+'</option>').join('')+'</select><label>日期</label><input name="date" type="date" value="'+safe(outcomeEditing?.date||TODAY)+'" required/><label>记录意义</label><textarea name="detail" maxlength="8000" placeholder="这件事为什么重要？有哪些可复用的收获？">'+safe(outcomeEditing?.detail||'')+'</textarea><button type="submit">'+(outcomeEditing?'保存修改':'收藏到成长档案')+'</button>'+(outcomeEditing?'<button type="button" data-act="cancel-outcome-edit">取消编辑</button>':'')+'</form></aside></div>';
  }else if(view==='settings'){
  body='<div class="module-layout"><section class="panel"><h3>数据只存储在当前浏览器</h3><p>科研和生活记录保存在 Supabase 私人数据库，私人文档保存在非公开 Storage。换设备后使用同一 GitHub 账号可继续访问已同步的记录；旧版浏览器本地的 PaperFlow 收藏和笔记仍需要单独迁移。请定期导出备份。</p><div class="form-stack"><label>当前博士阶段</label><select id="yearSelect">'+Array.from({length:9},(_,i)=>'<option value="'+(i+1)+'"'+(db.year===i+1?' selected':'')+'>博士第 '+(i+1)+' 年</option>').join('')+'</select><label>备份全部数据</label><button data-act="export" type="button">↓ 导出成长记录 JSON</button><label>从备份文件恢复</label><input id="importBackup" type="file" accept=".json,application/json"/><label>清除所有本地成长记录</label><button data-act="clear" type="button" style="background:#fff0f1;color:#a43f51;border:1px solid #f0d7dc">清空本机数据（需二次确认）</button></div></section><aside class="panel"><h3>隐私与公开网站</h3><p>公开的只是登录界面。未经身份验证和数据库授权，访客不能通过数据接口读取你的研究内容。网站源码不能存储任何未公开实验结果、API 私钥或私人文献。</p><div class="memo">数据库资料可跨设备访问，但上传文件不包含在 JSON 备份内。如需离线备份，请分别下载重要文档。旧版 PaperFlow 的浏览器本地收藏尚未自动迁移。</div><button class="big-link" type="button" data-view="literature">前往私人文献雷达 ↗</button></aside></div>';
  }
@@ -244,10 +254,22 @@ document.addEventListener('click',e=>{
  if(act==='prev-month'||act==='next-month'){displayMonth.setMonth(displayMonth.getMonth()+(act==='prev-month'?-1:1));renderCalendar();return}
  if(act==='today'){selected=TODAY;displayMonth=new Date(now.getFullYear(),now.getMonth(),1);weekOffset=0;render();return}
  if(act==='prev-week'||act==='next-week'){weekOffset+=(act==='prev-week'?-1:1);render();return}
+ if(act==='edit-entry'){entryEditId=id;render();return}
+ if(act==='cancel-entry-edit'){entryEditId=null;render();return}
+ if(act==='edit-outcome'){outcomeEditId=id;render();return}
+ if(act==='cancel-outcome-edit'){outcomeEditId=null;render();return}
+ if(act==='edit-track'){
+  if(btn.dataset.collection==='writing')writingEditId=id;else trackEditId=id;
+  render();return;
+ }
+ if(act==='cancel-track-edit'){trackEditId=null;writingEditId=null;render();return}
  if(act==='delete-entry'||act==='delete-task'||act==='delete-outcome'){
   if(!confirm('确定删除这条记录吗？'))return;
   const attr=act==='delete-entry'?'entries':act==='delete-task'?'tasks':'achievements';
-  db[attr]=db[attr].filter(x=>x.id!==id);save();render();return;
+  db[attr]=db[attr].filter(x=>x.id!==id);
+  if(act==='delete-entry'&&entryEditId===id)entryEditId=null;
+  if(act==='delete-outcome'&&outcomeEditId===id)outcomeEditId=null;
+  save();render();return;
  }
  if(act==='toggle-task'){const t=db.tasks.find(x=>x.id===id);if(t){t.done=btn.checked;save();render()}return}
  if(act==='export'){exportFile();return}
@@ -272,13 +294,33 @@ document.addEventListener('submit',e=>{
  e.preventDefault();
  const fd=new FormData(form);
  if(form.dataset.form==='module-entry'){
-  if(addEntry(fd.get('text'),form.dataset.kind,fd.get('date'))){render();toast('已保存到科研成长档案')}
+  const textValue=String(fd.get('text')||'').trim(),dateValue=String(fd.get('date')||'');
+  if(!textValue){toast('先写下你想记录的内容');return}
+  if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(dateValue)){toast('请选择有效日期');return}
+  if(form.dataset.id){
+   const old=db.entries.find(x=>x.id===form.dataset.id);
+   if(!old){toast('找不到这条日志');return}
+   old.text=textValue.slice(0,12000);old.date=dateValue;
+   entryEditId=null;save();render();toast('日志修改已保存');return;
+  }
+  if(addEntry(textValue,form.dataset.kind,dateValue)){render();toast('已保存到科研成长档案')}
+ }else if(form.dataset.form==='edit-track'){
+  const collection=form.dataset.collection==='writing'?'writing':'tracks';
+  const item=db[collection].find(x=>x.id===form.dataset.id);
+  const title=String(fd.get('title')||'').trim();
+  if(!item||!title){toast('请填写有效的名称');return}
+  item.title=title.slice(0,200);item.detail=String(fd.get('detail')||'').slice(0,1200);
+  if(collection==='writing')writingEditId=null;else trackEditId=null;
+  save();render();toast('研究路线已修改');return;
  }else if(form.id==='reviewForm'){
   const d={progress:String(fd.get('progress')||'').slice(0,20000),blocker:String(fd.get('blocker')||'').slice(0,20000),next:String(fd.get('next')||'').slice(0,20000),letter:String(fd.get('letter')||'').slice(0,20000)};
   db.reviews[getWeek()]=d;save();toast('本周复盘已保存');
  }else if(form.id==='outcomeForm'){
   const title=String(fd.get('title')||'').trim();if(!title)return;
-  db.achievements.push({id:uid(),title:title.slice(0,200),kind:String(fd.get('kind')||'研究突破'),date:String(fd.get('date')||TODAY),detail:String(fd.get('detail')||'').slice(0,8000)});
+  const fields={title:title.slice(0,200),kind:String(fd.get('kind')||'研究突破'),date:String(fd.get('date')||TODAY),detail:String(fd.get('detail')||'').slice(0,8000)};
+  const existing=db.achievements.find(a=>a.id===form.dataset.id);
+  if(existing){Object.assign(existing,fields);outcomeEditId=null;save();render();toast('成果修改已保存');return}
+  db.achievements.push({id:uid(),...fields});
   save();render();toast('已加入成果档案');
  }
 });
