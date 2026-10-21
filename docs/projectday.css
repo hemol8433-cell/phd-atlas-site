@@ -132,3 +132,22 @@
 .pd-progress-actions button{border:1px solid #dce4ef;background:#fff;color:#75839d;border-radius:8px;padding:8px 12px;font-size:11px}
 .pd-progress-actions button.pd-primary{background:#5667cb!important;color:#fff!important}
 @media(max-width:450px){.pd-project-progress-toolbar{align-items:flex-start}.pd-progress-form{padding:10px}.pd-progress-note{padding:9px}}
+
+
+/* Browse yesterday and previous dates without leaving the research daily review. */
+.pd-daily-date-nav{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.pd-daily-date-nav>button{border:1px solid #e1e7f0;background:#f7f9fd;color:#617293;border-radius:8px;min-width:32px;padding:8px 11px;font-size:12px}
+.pd-daily-date-nav>button:first-child,.pd-daily-date-nav>button:nth-child(3){font-size:18px;line-height:1}
+.pd-daily-date-label{display:flex;align-items:center;gap:8px;color:#7585a0;font-weight:650;font-size:11px}
+.pd-panel .pd-daily-date-label input[type=date]{width:158px;padding:8px 10px;background:#fff;min-width:0}
+.pd-daily-history{border-top:1px solid #edf0f6;margin-top:17px;padding-top:14px}
+.pd-daily-history-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.pd-daily-history-head strong{font-size:12px;color:#50627d}
+.pd-daily-history-head span{font-size:11px;color:#93a0b6}
+.pd-daily-chips{max-height:200px;overflow-y:auto;display:grid;gap:6px}
+.pd-daily-chips>button{display:flex;align-items:center;gap:11px;text-align:left;min-width:0;border:1px solid #ebeff5;border-radius:8px;background:#f9fafe;padding:9px 10px}
+.pd-daily-chips>button.selected{background:#edf2dd;border-color:#dce7ba}
+.pd-daily-chips time{white-space:nowrap;font-size:11px;font-weight:700;color:#617394}
+.pd-daily-chips>button span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#8998a9;font-size:11px}
+.pd-daily-no-history{color:#9ca8b8;font-size:11px;padding:6px 0}
+@media(max-width:600px){.pd-daily-date-nav{gap:6px}.pd-panel .pd-daily-date-label input[type=date]{width:142px}.pd-daily-date-label{gap:5px}.pd-daily-chips>button{gap:6px}}
