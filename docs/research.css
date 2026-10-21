@@ -134,3 +134,14 @@ footer{font-size:11px;color:#8b98a9;text-align:center;margin:26px auto}
 @media(max-width:1250px){.dashboard-grid{grid-template-columns:250px minmax(0,1fr)}.modules-panel{grid-column:1/-1}.tile-grid{grid-template-columns:repeat(4,1fr)}.module-tile{min-height:92px}}
 @media(max-width:880px){.page{padding:0 15px 40px}.dashboard-grid{grid-template-columns:1fr 1fr}.inbox{grid-column:1/-1}.modules-panel{grid-column:1/-1}.bottom-grid{grid-template-columns:1fr}.module-layout{grid-template-columns:1fr}.week-days{gap:5px}.week-day{padding:8px 3px}}
 @media(max-width:580px){.topbar{min-height:73px}.brand-title h1{font-size:18px}.brand-logo{width:43px;height:43px;font-size:23px}.brand-sub{font-size:10px}.header-right .header-date{display:none}.header-right .avatar{display:none}.intro{align-items:flex-start;flex-direction:column;padding:17px}.intro h2{font-size:20px}.dashboard-grid{grid-template-columns:1fr}.date-panel{grid-column:1/-1}.tile-grid{grid-template-columns:1fr 1fr;gap:8px}.module-tile{min-height:86px}.month-line strong{min-width:100px}.calendar-cell{height:43px}.week-day span{font-size:9px}.week-day b{font-size:15px}.week-day strong{font-size:10px}.panel{padding:15px}.task-row{flex-wrap:wrap}.task-row input{min-width:100%;}.task-row select{flex:1}.header-right button{font-size:11px;padding:7px}}
+
+
+/* Editable notes, outcomes and research-route descriptions. */
+.row-head>div{display:flex;align-items:center;gap:8px}
+.track-edit-form{display:grid;gap:8px;border:1px solid #e0e7f2;background:#f8faff;border-radius:10px;padding:12px;margin:8px 0}
+.track-edit-form label{display:grid;gap:5px;color:#73819a;font-size:11px;font-weight:650}
+.track-edit-form input,.track-edit-form textarea{width:100%;min-width:0;border:1px solid #dce4f1;border-radius:8px;background:#fff;color:#34435b;padding:9px 10px;font:inherit;font-size:12px}
+.track-edit-form textarea{resize:vertical;line-height:1.65}
+.track-edit-form>div{display:flex;justify-content:flex-end;gap:8px}
+.track-edit-form button{border:1px solid #dce4ef;background:#fff;color:#74829a;border-radius:8px;padding:8px 12px;font-size:11px}
+.track-edit-form button[type=submit]{background:#e9edff;border-color:#dce2ff;color:#5365bd}
