@@ -2,7 +2,7 @@
 const T=()=>new Date().toLocaleDateString("en-CA");
 const id=()=>Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,8);
 const e=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-let focusTicker=null;
+let focusTicker=null,editHabitId=null,editTodoId=null,editExpenseId=null;
 const LIFE_FOCUS_LABELS=["阅读","运动","整理","休息","个人事务"];
 const habitsTemplate=["规律作息","运动与散步","阅读学习","整理生活"];
 export function normalizeLife(x){
@@ -38,9 +38,9 @@ export function renderLife(root,api){
   const amount=(s.checks[y]||[]).length, ratio=s.habits.length?Math.min(100,100*amount/s.habits.length):0;
   return '<div class="lf-bar-col"><div class="lf-bar-track"><span style="height:'+ratio+'%"></span></div><small>'+["日","一","二","三","四","五","六"][day.getDay()]+'</small></div>';
  }).join("");
- const tasks=s.todos.map(x=>'<div class="lf-task '+(x.done?"done":"")+'"><label><input type="checkbox" data-lf-check="todo" data-id="'+e(x.id)+'"'+(x.done?" checked":"")+'/><span>'+e(x.title)+'</span></label><small>'+e(x.due||"无日期")+' · '+e(x.category||"生活")+'</small><button data-lf-act="remove-todo" data-id="'+e(x.id)+'" type="button">×</button></div>').join("");
- const habitCards=s.habits.map(x=>'<div class="lf-habit '+(done.has(x.id)?"checked":"")+'"><label><input type="checkbox" data-lf-check="habit" data-id="'+e(x.id)+'"'+(done.has(x.id)?" checked":"")+'/><span>'+e(x.name)+'</span></label><button data-lf-act="remove-habit" data-id="'+e(x.id)+'" type="button" aria-label="删除习惯">×</button></div>').join("");
- const money=recent.map(x=>'<div class="lf-money-row"><span>'+e(x.date)+'</span><strong>'+e(x.category||"其他")+'</strong><small>'+e(x.note||"")+'</small><b class="'+(x.type==="收入"?"positive":"")+'">'+(x.type==="收入"?"+":"−")+"¥"+Number(x.amount||0).toFixed(2)+'</b><button type="button" data-lf-act="remove-expense" data-id="'+e(x.id)+'">×</button></div>').join("");
+ const tasks=s.todos.map(x=>editTodoId===x.id?'<form class="lf-edit-form" data-lf-form="todo-edit" data-id="'+e(x.id)+'"><label>事项<input name="title" maxlength="180" required value="'+e(x.title)+'"/></label><div class="lf-two"><label>类别<select name="category">'+["日常","健康","家庭","出行","其他"].map(v=>'<option'+(v===(x.category||"日常")?" selected":"")+'>'+v+'</option>').join("")+'</select></label><label>日期<input type="date" name="due" value="'+e(x.due||"")+'"/></label></div><label class="lf-edit-check"><input type="checkbox" name="done" value="yes"'+(x.done?" checked":"")+'/> 已完成</label><div><button type="submit">保存修改</button><button type="button" data-lf-act="cancel-edit">取消</button></div></form>':'<div class="lf-task '+(x.done?"done":"")+'"><label><input type="checkbox" data-lf-check="todo" data-id="'+e(x.id)+'"'+(x.done?" checked":"")+'/><span>'+e(x.title)+'</span></label><small>'+e(x.due||"无日期")+' · '+e(x.category||"生活")+'</small><div><button data-lf-act="edit-todo" data-id="'+e(x.id)+'" type="button">编辑</button><button data-lf-act="remove-todo" data-id="'+e(x.id)+'" type="button">×</button></div></div>').join("");
+ const habitCards=s.habits.map(x=>editHabitId===x.id?'<form class="lf-edit-form" data-lf-form="habit-edit" data-id="'+e(x.id)+'"><label>习惯名称<input name="name" maxlength="60" required value="'+e(x.name)+'"/></label><div><button type="submit">保存修改</button><button type="button" data-lf-act="cancel-edit">取消</button></div></form>':'<div class="lf-habit '+(done.has(x.id)?"checked":"")+'"><label><input type="checkbox" data-lf-check="habit" data-id="'+e(x.id)+'"'+(done.has(x.id)?" checked":"")+'/><span>'+e(x.name)+'</span></label><div><button data-lf-act="edit-habit" data-id="'+e(x.id)+'" type="button" aria-label="编辑习惯">编辑</button><button data-lf-act="remove-habit" data-id="'+e(x.id)+'" type="button" aria-label="删除习惯">×</button></div></div>').join("");
+ const money=recent.map(x=>editExpenseId===x.id?'<form class="lf-edit-form" data-lf-form="expense-edit" data-id="'+e(x.id)+'"><div class="lf-two"><label>日期<input type="date" name="date" required value="'+e(x.date||today)+'"/></label><label>类型<select name="type">'+["支出","收入"].map(v=>'<option'+(v===x.type?" selected":"")+'>'+v+'</option>').join("")+'</select></label></div><div class="lf-two"><label>金额<input name="amount" type="number" step="0.01" min="0.01" max="10000000" required value="'+e(x.amount||"")+'"/></label><label>类别<select name="category">'+["餐饮","交通","生活","健康","学习","其他"].map(v=>'<option'+(v===(x.category||"其他")?" selected":"")+'>'+v+'</option>').join("")+'</select></label></div><label>备注<input name="note" maxlength="120" value="'+e(x.note||"")+'"/></label><div><button type="submit">保存修改</button><button type="button" data-lf-act="cancel-edit">取消</button></div></form>':'<div class="lf-money-row"><span>'+e(x.date)+'</span><strong>'+e(x.category||"其他")+'</strong><small>'+e(x.note||"")+'</small><b class="'+(x.type==="收入"?"positive":"")+'">'+(x.type==="收入"?"+":"−")+"¥"+Number(x.amount||0).toFixed(2)+'</b><div><button type="button" data-lf-act="edit-expense" data-id="'+e(x.id)+'">编辑</button><button type="button" data-lf-act="remove-expense" data-id="'+e(x.id)+'">×</button></div></div>').join("");
  root.innerHTML=[
  '<div class="lf-hero"><div><span class="lf-overline">PERSONAL LIFE · PRIVATE</span><h2>生活空间 <em>Life & Balance</em></h2><p>生活不需要变成另一份科研任务。记录健康的节奏，也给自己留一点空间。</p></div><span class="lf-date">'+today+'</span></div>',
  '<div class="lf-summary"><div class="lf-summary-card"><span>今日生活习惯</span><strong>'+checked+' <small>/ '+s.habits.length+'</small></strong><p>按自己设定的习惯打卡</p></div><div class="lf-summary-card"><span>今天的心情</span><strong>'+(day.mood?["","低落","疲惫","平静","不错","开心"][day.mood]:"未记录")+'</strong><p>没有对错，不必每天完美</p></div><div class="lf-summary-card"><span>生活待办</span><strong>'+s.todos.filter(x=>!x.done).length+'</strong><p>尚未完成的个人事项</p></div><div class="lf-summary-card"><span>今日手动记账</span><strong>¥'+expenseToday.toFixed(2)+'</strong><p>仅计算手动登记的支出</p></div></div>',
@@ -97,7 +97,12 @@ export function renderLife(root,api){
     }
   }
   const btn=event.target.closest("[data-lf-act]");if(!btn||!root.contains(btn))return;
-  const map={"remove-habit":"habits","remove-todo":"todos","remove-expense":"expenses"},field=map[btn.dataset.lfAct];
+  const action=btn.dataset.lfAct,key=btn.dataset.id;
+  if(action==="cancel-edit"){editHabitId=null;editTodoId=null;editExpenseId=null;redraw();return;}
+  if(action==="edit-habit"){editHabitId=key;editTodoId=null;editExpenseId=null;redraw();return;}
+  if(action==="edit-todo"){editTodoId=key;editHabitId=null;editExpenseId=null;redraw();return;}
+  if(action==="edit-expense"){editExpenseId=key;editHabitId=null;editTodoId=null;redraw();return;}
+  const map={"remove-habit":"habits","remove-todo":"todos","remove-expense":"expenses"},field=map[action];
   if(!field||!confirm("确定删除这条记录吗？"))return;
   s[field]=s[field].filter(x=>x.id!==btn.dataset.id);
   if(field==="habits")d.activityEvents=(d.activityEvents||[]).filter(x=>!String(x.id||"").endsWith(":"+btn.dataset.id)||!String(x.id||"").startsWith("life-habit:"));
@@ -109,7 +114,18 @@ export function renderLife(root,api){
   const form=event.target.closest("[data-lf-form]");if(!form||!root.contains(form))return;
   event.preventDefault();
   const f=new FormData(form),v=k=>String(f.get(k)||"").trim();
-  if(form.dataset.lfForm==="habit"){
+  if(form.dataset.lfForm==="habit-edit"){
+   const item=s.habits.find(x=>x.id===form.dataset.id);if(!item||!v("name"))return;
+   item.name=v("name").slice(0,60);editHabitId=null;
+  }else if(form.dataset.lfForm==="todo-edit"){
+   const item=s.todos.find(x=>x.id===form.dataset.id);if(!item||!v("title"))return;
+   Object.assign(item,{title:v("title").slice(0,180),category:v("category"),due:v("due"),done:f.get("done")==="yes"});editTodoId=null;
+  }else if(form.dataset.lfForm==="expense-edit"){
+   const item=s.expenses.find(x=>x.id===form.dataset.id);if(!item)return;
+   const amount=Number(v("amount"));if(!Number.isFinite(amount)||amount<=0||amount>10000000){api.toast("请输入有效金额");return;}
+   Object.assign(item,{date:v("date"),type:v("type")==="收入"?"收入":"支出",amount,category:v("category"),note:v("note").slice(0,120)});editExpenseId=null;
+   lifeMoment("life-expense:"+item.id,"修改生活收支",item.category);
+  }else if(form.dataset.lfForm==="habit"){
    if(!v("name"))return;s.habits.push({id:id(),name:v("name").slice(0,60)});
   }else if(form.dataset.lfForm==="todo"){
    if(!v("title"))return;s.todos.push({id:id(),title:v("title").slice(0,180),category:v("category"),due:v("due"),done:false});
