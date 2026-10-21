@@ -153,7 +153,7 @@ function renderModule(){
    el.innerHTML='<section class="panel"><h3>正在加载私人空间…</h3></section>';
    const isLife=view==='life';
    const key=isLife?'__lifeLoader':'__vaultLoader';
-   if(!window[key])window[key]=import(isLife?'./life.js?v=20261020-l3':'./vault.js?v=20261020-v1');
+   if(!window[key])window[key]=import(isLife?'./life.js?v=20261021-editable-diary':'./vault.js?v=20261021-editable-metadata');
    window[key].then(mod=>{
      if(view!==(isLife?'life':'vault'))return;
      const api={data:()=>db,save,toast,session};
@@ -166,7 +166,7 @@ function renderModule(){
  }
  if(view==='projectday'){
    el.innerHTML='<section class="panel"><h3>正在加载科研执行中心…</h3></section>';
-   if(!window.__projectDayLoader)window.__projectDayLoader=import("./projectday.js?v=20261021-daily-history");
+   if(!window.__projectDayLoader)window.__projectDayLoader=import("./projectday.js?v=20261021-editable-records");
    window.__projectDayLoader.then(mod=>{
      if(view==='projectday')mod.renderProjectDay(el,{data:()=>db,save,toast});
    }).catch(error=>{
@@ -290,7 +290,7 @@ document.addEventListener('change',e=>{
 });
 document.addEventListener('submit',e=>{
  const form=e.target;
- if(!['reviewForm','outcomeForm'].includes(form.id)&&form.dataset.form!=='module-entry')return;
+ if(!['reviewForm','outcomeForm'].includes(form.id)&&!['module-entry','edit-track'].includes(form.dataset.form))return;
  e.preventDefault();
  const fd=new FormData(form);
  if(form.dataset.form==='module-entry'){
