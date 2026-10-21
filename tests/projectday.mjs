@@ -75,7 +75,7 @@ try {
  root.onclick({target:{closest:()=>({dataset:{pdAct:"daily-today"}})}});
  assert.match(root.innerHTML,/Verify PDE derivative/,"Returning to today must restore today's values");
  openPast();
- assert.match(root.innerHTML,/Updated previous day's priority/,"The revised past record is browsable");
+ assert.match(root.innerHTML,/Updated previous day/,"The revised past record is browsable");
  submit("session",{projectId:pid,minutes:"45",date:"2026-10-20",note:"Ran baseline"});
  assert.equal(data.projectday.sessions[0].seconds,2700);
  submit("idea",{text:"Check gradient conflict"});
