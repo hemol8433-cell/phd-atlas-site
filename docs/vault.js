@@ -11,7 +11,7 @@ const allow={
 const limit=25*1024*1024;
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const bytes=x=>x>=1048576?(x/1048576).toFixed(1)+" MB":x>=1024?(x/1024).toFixed(0)+" KB":x+" B";
-let category="all",listed=[],busy=false,previewUrl=null;
+let category="all",listed=[],busy=false,previewUrl=null,editMetaPath=null;
 const safeName=file=>String(file.name||"unnamed").slice(0,230);
 function closePreview(root){
  const dialog=root.querySelector("#vaultPreview");
@@ -52,7 +52,8 @@ export async function renderVault(root,api){
     const mime=meta?.mime||f.metadata?.mimetype||"";
     const image=mime.startsWith("image/"),pdf=mime==="application/pdf";
     const icon=image?"▧":pdf?"▤":"▥";
-    return '<article class="vt-item"><div class="vt-file-icon">'+icon+'</div><div class="vt-file-info"><strong title="'+esc(name)+'">'+esc(name)+'</strong><small>'+esc(TYPES[entry.category]||"文件")+' · '+bytes(Number(f.metadata?.size)||Number(meta?.size)||0)+' · '+esc((f.created_at||meta?.createdAt||"").slice(0,10))+'</small>'+(meta?.note?'<p>'+esc(meta.note)+'</p>':"")+'</div><div class="vt-actions">'+((image||pdf)?'<button type="button" data-vt-act="preview" data-path="'+esc(entry.path)+'">预览</button>':"")+'<button type="button" data-vt-act="download" data-path="'+esc(entry.path)+'">下载</button><button type="button" data-vt-act="delete" data-path="'+esc(entry.path)+'">删除</button></div></article>';
+    const metaEditor=editMetaPath===entry.path?'<form class="vt-meta-editor" data-vt-meta="'+esc(entry.path)+'"><label>显示名称<input name="name" required maxlength="230" value="'+esc(meta?.name||name)+'"/></label><label>资料类别<select name="category">'+Object.entries(TYPES).map(([k,v])=>'<option value="'+k+'"'+(k===entry.category?' selected':'')+'>'+v+'</option>').join("")+'</select></label><label>备注<textarea name="note" rows="2" maxlength="250">'+esc(meta?.note||"")+'</textarea></label><div><button type="submit">保存修改</button><button type="button" data-vt-act="cancel-meta" data-path="'+esc(entry.path)+'">取消</button></div></form>':'';
+    return '<article class="vt-item"><div class="vt-file-icon">'+icon+'</div><div class="vt-file-info"><strong title="'+esc(name)+'">'+esc(name)+'</strong><small>'+esc(TYPES[entry.category]||"文件")+' · '+bytes(Number(f.metadata?.size)||Number(meta?.size)||0)+' · '+esc((f.created_at||meta?.createdAt||"").slice(0,10))+'</small>'+(meta?.note?'<p>'+esc(meta.note)+'</p>':"")+'</div><div class="vt-actions">'+((image||pdf)?'<button type="button" data-vt-act="preview" data-path="'+esc(entry.path)+'">预览</button>':"")+'<button type="button" data-vt-act="download" data-path="'+esc(entry.path)+'">下载</button><button type="button" data-vt-act="edit-meta" data-path="'+esc(entry.path)+'">编辑信息</button><button type="button" data-vt-act="delete" data-path="'+esc(entry.path)+'">删除</button></div>'+metaEditor+'</article>';
   }).join(""):'<div class="vt-empty">这个分类中还没有文件。选择左侧资料，即可安全上传。</div>';
  };
  async function refresh(){
@@ -72,6 +73,29 @@ export async function renderVault(root,api){
  await refresh();
  root.querySelector("#vaultClose").onclick=()=>closePreview(root);
  root.querySelector("#vaultPreview").addEventListener("close",()=>closePreview(root));
+ root.addEventListener("submit",async event=>{
+  const form=event.target.closest("[data-vt-meta]");
+  if(!form||!root.contains(form))return;
+  event.preventDefault();if(busy)return;
+  const path=form.dataset.vtMeta,entry=listed.find(x=>x.path===path);
+  if(!entry){notice("找不到这份文件");return;}
+  const fd=new FormData(form),name=String(fd.get("name")||"").trim().slice(0,230),note=String(fd.get("note")||"").slice(0,250),nextCategory=String(fd.get("category")||entry.category);
+  if(!name){notice("请填写文件显示名称");return;}
+  if(!Object.hasOwn(TYPES,nextCategory)){notice("请选择有效的资料类别");return;}
+  let nextPath=path;
+  if(nextCategory!==entry.category){
+   const fileName=path.split("/").pop();nextPath=prefix+nextCategory+"/"+fileName;
+   busy=true;
+   const {error}=await storage.move(path,nextPath);
+   busy=false;
+   if(error){notice("移动文件类别失败："+error.message);return;}
+  }
+  const existing=filesMap.get(path)||{path,name,category:entry.category,createdAt:entry.file.created_at||new Date().toISOString()};
+  db.vaultFiles=db.vaultFiles.filter(x=>x.path!==path);
+  db.vaultFiles.push({...existing,path:nextPath,name,note,category:nextCategory});
+  api.save();filesMap.delete(path);filesMap.set(nextPath,{...existing,path:nextPath,name,note,category:nextCategory});
+  editMetaPath=null;notice("文件信息已修改并同步");await refresh();
+ });
  root.querySelector("#vaultUpload").onsubmit=async event=>{
   event.preventDefault();
   if(busy)return;
@@ -104,6 +128,8 @@ export async function renderVault(root,api){
   const button=event.target.closest("[data-vt-act]");
   if(!button||busy)return;
   const path=button.dataset.path,action=button.dataset.vtAct,entry=listed.find(x=>x.path===path);
+  if(action==="edit-meta"){if(!entry)return;editMetaPath=path;show();return;}
+  if(action==="cancel-meta"){editMetaPath=null;show();return;}
   if(!entry)return;
   if(action==="delete"){
    if(!confirm("确定从私人云端永久删除文件？此操作无法撤销。"))return;
