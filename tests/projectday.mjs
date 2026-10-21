@@ -16,7 +16,7 @@ try {
  assert.deepEqual(mod.normalizeProjectDay(null).tasks,[]);
  mod.renderProjectDay(root,api);
  assert.match(root.innerHTML,/任务四象限/);
- assert.match(root.innerHTML,/今日重点/);
+ assert.match(root.innerHTML,/研究方向 · 每日复盘/);
  assert.match(root.innerHTML,/专注计时/);
  assert.equal(data.entries[0].id,"existing");
  const submit=(name,values,extra={})=>{
