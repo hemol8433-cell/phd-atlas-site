@@ -2,7 +2,7 @@
 const T=()=>new Date().toLocaleDateString("en-CA");
 const id=()=>Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,8);
 const e=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-let focusTicker=null,editHabitId=null,editTodoId=null,editExpenseId=null;
+let focusTicker=null,editHabitId=null,editTodoId=null,editExpenseId=null,selectedLifeDate="",lifeDailyDirty=false;
 const LIFE_FOCUS_LABELS=["阅读","运动","整理","休息","个人事务"];
 const habitsTemplate=["规律作息","运动与散步","阅读学习","整理生活"];
 export function normalizeLife(x){
@@ -19,7 +19,7 @@ export function normalizeLife(x){
  return data;
 }
 export function renderLife(root,api){
- const d=api.data(),s=d.life=normalizeLife(d.life),today=T(),day=s.daily[today]||{};
+ const d=api.data(),s=d.life=normalizeLife(d.life),today=T(),dailyDate=/^\d{4}-\d{2}-\d{2}$/.test(selectedLifeDate)?selectedLifeDate:today,day=s.daily[dailyDate]||{};
  const lifeMoment=(eventId,title,note="")=>{
    if(!Array.isArray(d.activityEvents))d.activityEvents=[];
    d.activityEvents=d.activityEvents.filter(x=>x.id!==eventId);
@@ -32,6 +32,8 @@ export function renderLife(root,api){
  const checked=s.habits.filter(x=>done.has(x.id)).length;
  const expenseToday=s.expenses.filter(x=>x.date===today&&x.type==="支出").reduce((n,x)=>n+Number(x.amount||0),0);
  const recent=[...s.expenses].reverse().slice(0,8);
+ const savedLifeDates=Object.keys(s.daily||{}).filter(date=>/^\d{4}-\d{2}-\d{2}$/.test(date)&&s.daily[date]&&typeof s.daily[date]==="object"&&["mood","sleep","energy","note"].some(k=>s.daily[date][k]!==null&&s.daily[date][k]!==undefined&&String(s.daily[date][k]).trim()!=="")).sort().reverse();
+ const dailyDateNav='<div class="lf-daily-date-nav"><button type="button" data-lf-act="daily-prev" aria-label="前一天">‹</button><label>日期<input type="date" data-lf-change="daily-date" value="'+e(dailyDate)+'" aria-label="选择生活日记日期"/></label><button type="button" data-lf-act="daily-next" aria-label="后一天">›</button><button type="button" data-lf-act="daily-today">今天</button></div><div class="lf-daily-history">'+(savedLifeDates.length?savedLifeDates.map(date=>'<button type="button" data-lf-act="daily-open" data-date="'+e(date)+'" class="'+(date===dailyDate?"selected":"")+'"><time>'+e(date)+'</time><span>'+e(String(s.daily[date].note||"已保存生活记录").slice(0,38))+'</span></button>').join(""):'<small>还没有更早的生活日记</small>')+'</div>';
  const calendar=Array.from({length:7},(_,i)=>{
   const day=new Date(today+"T12:00:00");day.setDate(day.getDate()-6+i);
   const y=day.getFullYear()+"-"+String(day.getMonth()+1).padStart(2,"0")+"-"+String(day.getDate()).padStart(2,"0");
@@ -45,7 +47,7 @@ export function renderLife(root,api){
  '<div class="lf-hero"><div><span class="lf-overline">PERSONAL LIFE · PRIVATE</span><h2>生活空间 <em>Life & Balance</em></h2><p>生活不需要变成另一份科研任务。记录健康的节奏，也给自己留一点空间。</p></div><span class="lf-date">'+today+'</span></div>',
  '<div class="lf-summary"><div class="lf-summary-card"><span>今日生活习惯</span><strong>'+checked+' <small>/ '+s.habits.length+'</small></strong><p>按自己设定的习惯打卡</p></div><div class="lf-summary-card"><span>今天的心情</span><strong>'+(day.mood?["","低落","疲惫","平静","不错","开心"][day.mood]:"未记录")+'</strong><p>没有对错，不必每天完美</p></div><div class="lf-summary-card"><span>生活待办</span><strong>'+s.todos.filter(x=>!x.done).length+'</strong><p>尚未完成的个人事项</p></div><div class="lf-summary-card"><span>今日手动记账</span><strong>¥'+expenseToday.toFixed(2)+'</strong><p>仅计算手动登记的支出</p></div></div>',
  '<div class="lf-cols"><section class="lf-panel"><div class="lf-panel-head"><h3>♡ 生活习惯</h3><span>'+checked+' / '+s.habits.length+' 已完成</span></div><div class="lf-habit-grid">'+(habitCards||'<p class="lf-empty">添加第一条习惯</p>')+'</div><form class="lf-inline-form" data-lf-form="habit"><input name="name" maxlength="60" required placeholder="新增习惯，例如每周运动"/><button type="submit">＋ 添加</button></form><h4>过去七天的习惯完成情况</h4><div class="lf-bars">'+calendar+'</div></section>',
- '<section class="lf-panel"><div class="lf-panel-head"><h3>✳ 今日状态与日记</h3><span>仅本人可见</span></div><form class="lf-form" data-lf-form="daily"><label>今天的心情</label><div class="lf-mood">'+[1,2,3,4,5].map((v)=>'<label class="'+(Number(day.mood)===v?"selected":"")+'"><input type="radio" name="mood" value="'+v+'"'+(Number(day.mood)===v?" checked":"")+'/><span>'+["","低落","疲惫","平静","不错","开心"][v]+'</span></label>').join("")+'</div><div class="lf-two"><label>睡眠时间（小时）<input name="sleep" type="number" min="0" max="24" step="0.5" value="'+e(day.sleep??"")+'" placeholder="例如 7.5"/></label><label>精力状态（1～5）<select name="energy"><option value="">未记录</option>'+[1,2,3,4,5].map(v=>'<option value="'+v+'"'+(Number(day.energy)===v?" selected":"")+'">'+v+'</option>').join("")+'</select></label></div><label>生活记录</label><textarea name="note" rows="5" maxlength="6000" placeholder="今天让你开心的事，或一段不需要产出的时间……">'+e(day.note||"")+'</textarea><button class="lf-primary" type="submit">保存今日生活记录</button></form></section></div>',
+ '<section class="lf-panel"><div class="lf-panel-head"><h3>✳ 生活状态与日记</h3><span>'+e(dailyDate)+' · 仅本人可见</span></div>'+dailyDateNav+'<form class="lf-form" data-lf-form="daily"><label>这一天的心情</label><div class="lf-mood">'+[1,2,3,4,5].map((v)=>'<label class="'+(Number(day.mood)===v?"selected":"")+'"><input type="radio" name="mood" value="'+v+'"'+(Number(day.mood)===v?" checked":"")+'/><span>'+["","低落","疲惫","平静","不错","开心"][v]+'</span></label>').join("")+'</div><div class="lf-two"><label>睡眠时间（小时）<input name="sleep" type="number" min="0" max="24" step="0.5" value="'+e(day.sleep??"")+'" placeholder="例如 7.5"/></label><label>精力状态（1～5）<select name="energy"><option value="">未记录</option>'+[1,2,3,4,5].map(v=>'<option value="'+v+'"'+(Number(day.energy)===v?" selected":"")+'">'+v+'</option>').join("")+'</select></label></div><label>生活记录</label><textarea name="note" rows="5" maxlength="6000" placeholder="这一天让你开心的事，或一段不需要产出的时间……">'+e(day.note||"")+'</textarea><button class="lf-primary" type="submit">保存这一天的生活记录</button></form></section></div>',
  '<section class="lf-panel lf-focus-panel"><div class="lf-panel-head"><h3>◷ 生活专注</h3><span>真实时间自动进入每周时间表</span></div><div class="lf-focus-row"><select id="lf-focus-type">'+LIFE_FOCUS_LABELS.map(x=>'<option'+(s.timer.label===x?" selected":"")+'>'+x+'</option>').join("")+'</select><strong id="lf-focus-clock">'+timeLabel()+'</strong><button type="button" data-lf-focus="toggle">'+(s.timer.startedAt?"暂停":"开始")+'</button><button type="button" data-lf-focus="save">保存时段</button><button type="button" data-lf-focus="clear">清零</button></div></section>',
  '<div class="lf-cols lf-lower"><section class="lf-panel"><div class="lf-panel-head"><h3>▤ 生活待办</h3><span>家务 · 健康 · 关系 · 行程</span></div><form data-lf-form="todo" class="lf-inline-form"><input name="title" maxlength="180" required placeholder="例如：周末采购、预约体检"/><select name="category"><option>日常</option><option>健康</option><option>家庭</option><option>出行</option><option>其他</option></select><input name="due" type="date" aria-label="到期日期"/><button type="submit">添加</button></form><div class="lf-tasks">'+(tasks||'<p class="lf-empty">还没有待办事项</p>')+'</div></section>',
  '<section class="lf-panel"><div class="lf-panel-head"><h3>◉ 简单收支记录</h3><span>手动记账 · 不连接银行</span></div><form class="lf-inline-form" data-lf-form="expense"><select name="type"><option>支出</option><option>收入</option></select><input name="amount" type="number" step="0.01" min="0.01" max="10000000" required placeholder="金额（元）"/><select name="category"><option>餐饮</option><option>交通</option><option>生活</option><option>健康</option><option>学习</option><option>其他</option></select><input name="note" maxlength="120" placeholder="备注"/><button type="submit">记录</button></form><div class="lf-money-list">'+(money||'<p class="lf-empty">暂无收支记录</p>')+'</div></section></div>',
@@ -55,8 +57,15 @@ export function renderLife(root,api){
  const redraw=()=>renderLife(root,api);
  if(focusTicker)clearInterval(focusTicker);
  focusTicker=setInterval(()=>{const el=root.querySelector("#lf-focus-clock");if(el)el.textContent=timeLabel();},1000);
+ const switchLifeDate=date=>{
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return;
+  if(lifeDailyDirty&&!confirm("当前生活日记有未保存的修改，确定切换日期吗？"))return;
+  selectedLifeDate=date;lifeDailyDirty=false;redraw();
+ };
+ root.oninput=event=>{if(event.target?.closest?.('[data-lf-form="daily"]'))lifeDailyDirty=true;};
  root.onchange=event=>{
   const el=event.target;
+  if(el.dataset.lfChange==="daily-date"){switchLifeDate(el.value);return;}
   if(el.id==="lf-focus-type"){if(s.timer.startedAt){api.toast("请先暂停专注再切换类型");el.value=s.timer.label;return;}s.timer.label=LIFE_FOCUS_LABELS.includes(el.value)?el.value:"阅读";save();return;}
   if(el.dataset.lfCheck==="habit"){
    const set=new Set(s.checks[today]||[]);
@@ -98,6 +107,9 @@ export function renderLife(root,api){
   }
   const btn=event.target.closest("[data-lf-act]");if(!btn||!root.contains(btn))return;
   const action=btn.dataset.lfAct,key=btn.dataset.id;
+  if(action==="daily-prev"||action==="daily-next"){const d0=new Date(dailyDate+"T12:00:00");d0.setDate(d0.getDate()+(action==="daily-next"?1:-1));switchLifeDate(d0.getFullYear()+"-"+String(d0.getMonth()+1).padStart(2,"0")+"-"+String(d0.getDate()).padStart(2,"0"));return;}
+  if(action==="daily-today"){switchLifeDate(today);return;}
+  if(action==="daily-open"){switchLifeDate(btn.dataset.date||"");return;}
   if(action==="cancel-edit"){editHabitId=null;editTodoId=null;editExpenseId=null;redraw();return;}
   if(action==="edit-habit"){editHabitId=key;editTodoId=null;editExpenseId=null;redraw();return;}
   if(action==="edit-todo"){editTodoId=key;editHabitId=null;editExpenseId=null;redraw();return;}
@@ -138,8 +150,8 @@ export function renderLife(root,api){
   }else if(form.dataset.lfForm==="daily"){
    const sleep=v("sleep")===""?null:Number(v("sleep"));
    if(sleep!==null&&(!Number.isFinite(sleep)||sleep<0||sleep>24)){api.toast("睡眠时间请填写 0～24 小时");return;}
-   s.daily[today]={mood:v("mood")?Number(v("mood")):null,energy:v("energy")?Number(v("energy")):null,sleep,note:v("note").slice(0,6000)};
-   lifeMoment("life-daily:"+today,"更新生活日记 / 状态","仅记录填写时刻，不表示活动持续时间");
+   s.daily[dailyDate]={mood:v("mood")?Number(v("mood")):null,energy:v("energy")?Number(v("energy")):null,sleep,note:v("note").slice(0,6000)};
+   lifeMoment("life-daily:"+dailyDate,"更新生活日记 / 状态","日记日期："+dailyDate+"；仅记录填写时刻，不表示活动持续时间");lifeDailyDirty=false;
   }else return;
   save();redraw();
  };
