@@ -23,7 +23,7 @@ try {
     document.querySelector(".header-right")?.prepend(btn);
     document.documentElement.style.visibility = "visible";
     const script = document.createElement("script");
-    script.src = "./research.js?v=20261020-suixu-project-progress-2";
+    script.src = "./research.js?v=20261021-daily-history";
     script.defer = true;
     document.body.appendChild(script);
   }
