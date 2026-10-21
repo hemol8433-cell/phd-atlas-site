@@ -157,7 +157,7 @@ function renderModule(){
  }
  if(view==='projectday'){
    el.innerHTML='<section class="panel"><h3>正在加载科研执行中心…</h3></section>';
-   if(!window.__projectDayLoader)window.__projectDayLoader=import("./projectday.js?v=20261020-pd4");
+   if(!window.__projectDayLoader)window.__projectDayLoader=import("./projectday.js?v=20261021-daily-history");
    window.__projectDayLoader.then(mod=>{
      if(view==='projectday')mod.renderProjectDay(el,{data:()=>db,save,toast});
    }).catch(error=>{
