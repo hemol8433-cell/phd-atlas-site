@@ -66,6 +66,7 @@ export function renderLife(root,api){
  root.onchange=event=>{
   const el=event.target;
   if(el.dataset.lfChange==="daily-date"){switchLifeDate(el.value);return;}
+  if(el.closest?.('[data-lf-form="daily"]'))lifeDailyDirty=true;
   if(el.id==="lf-focus-type"){if(s.timer.startedAt){api.toast("请先暂停专注再切换类型");el.value=s.timer.label;return;}s.timer.label=LIFE_FOCUS_LABELS.includes(el.value)?el.value:"阅读";save();return;}
   if(el.dataset.lfCheck==="habit"){
    const set=new Set(s.checks[today]||[]);
