@@ -31,7 +31,7 @@ export function normalizeProjectDay(x){
  }
  return d;
 }
-let kind="灵感",weekOffset=0,ticker,progressEditorProjectId="",progressEditorNoteId="";
+let kind="灵感",weekOffset=0,ticker,progressEditorProjectId="",progressEditorNoteId="",dailySelectedDate="";
 export function renderProjectDay(root,api){
  const data=api.data(),s=data.projectday=normalizeProjectDay(data.projectday);
  const today=NOW(), monday=new Date(today+"T12:00:00");
@@ -68,7 +68,11 @@ export function renderProjectDay(root,api){
  }).join("");
  const log=s.sessions.slice(-10).reverse().map(x=>'<div class="pd-log"><time>'+E(x.date)+'</time><div><b>'+E(pname(x.projectId))+'</b><p>'+E(x.note||"专注时段")+'</p></div><strong>'+duration(x.seconds)+'</strong><button type="button" data-pd-act="remove-session" data-id="'+E(x.id)+'">×</button></div>').join("");
  const ideas=s.ideas.slice(-10).reverse().map(x=>'<div class="pd-idea"><span>'+E(x.type)+'</span><p>'+E(x.text)+'</p><small>'+E(x.date)+'</small><button type="button" data-pd-act="remove-idea" data-id="'+E(x.id)+'">×</button></div>').join("");
- const note=s.daily[today]||{};
+ const currentDailyDate=/^\d{4}-\d{2}-\d{2}$/.test(dailySelectedDate)?dailySelectedDate:today;
+ const note=s.daily[currentDailyDate]||{};
+ const savedDailyDates=Object.keys(s.daily||{}).filter(date=>/^\d{4}-\d{2}-\d{2}$/.test(date)&&s.daily[date]&&typeof s.daily[date]==="object"&&["priority","minimum","reflection"].some(k=>String(s.daily[date][k]||"").trim())).sort().reverse();
+ const dailyDateNav='<div class="pd-daily-date-nav"><button type="button" data-pd-act="daily-prev" aria-label="前一天">‹</button><label class="pd-daily-date-label">选择日期 <input type="date" data-pd-change="daily-date" aria-label="选择每日研究复盘日期" value="'+E(currentDailyDate)+'"/></label><button type="button" data-pd-act="daily-next" aria-label="后一天">›</button><button type="button" data-pd-act="daily-today">今天</button></div>';
+ const historyDailyDates='<div class="pd-daily-history"><div class="pd-daily-history-head"><strong>历史记录</strong><span>'+savedDailyDates.length+' 天</span></div><div class="pd-daily-chips">'+(savedDailyDates.length?savedDailyDates.map(date=>'<button type="button" data-pd-act="daily-open" data-date="'+E(date)+'" class="'+(date===currentDailyDate?"selected":"")+'"><time>'+E(date)+'</time><span>'+E(String(s.daily[date].priority||s.daily[date].minimum||s.daily[date].reflection||"已保存").slice(0,45))+'</span></button>').join(""):'<span class="pd-daily-no-history">还没有保存过每日复盘</span>')+'</div></div>';
  root.innerHTML=[
  '<div class="pd-header"><div><span class="pd-overline">PROJECTDAY · RESEARCH OPERATING SYSTEM</span><h2>科研执行中心 <em>ProjectDay</em></h2><p>给每个研究方向一个清晰目标，给每天一个最小行动。</p></div><div class="pd-head-tags"><span>博士第 '+(Number(data.year)||2)+' 年</span><span>'+E(today)+'</span></div></div>',
  '<div class="pd-top-grid"><section class="pd-panel pd-overview"><div class="pd-heading"><h3>01 · 项目总览</h3><span>本周 '+E(weekBegin)+' 至 '+E(weekEnd)+'</span></div><div class="pd-stats">',
@@ -76,7 +80,7 @@ export function renderProjectDay(root,api){
  '</div><p class="pd-hint">时间仅计算你记录的实际投入，不自动推测研究成果。</p></section>',
  '<section class="pd-panel pd-inspiration"><div class="pd-idea-types">'+KINDS.map(x=>'<button type="button" data-pd-act="idea-kind" data-pd-kind="'+x+'" class="'+(x===kind?"selected":"")+'">'+x+'</button>').join("")+'</div><form data-pd-form="idea"><textarea name="text" required maxlength="2500" placeholder="一个想法、一条感悟或一个新的研究问题……"></textarea><button class="pd-primary" type="submit">记录到灵感库 ↗</button></form></section></div>',
  '<div class="pd-title-line"><div><span class="pd-number">02</span><h3>今日与方向</h3><small>先确定重点，再管理任务优先级</small></div><div class="pd-week-nav"><button type="button" data-pd-act="prev-week">‹</button><span>'+E(weekBegin)+' — '+E(weekEnd)+'</span><button type="button" data-pd-act="next-week">›</button></div></div>',
- '<div class="pd-day-grid"><section class="pd-panel"><div class="pd-heading"><h3>今日重点 · 每日复盘</h3><span>完成比完美更重要</span></div><form class="pd-form pd-daily" data-pd-form="daily"><label>今天最重要的研究问题</label><textarea name="priority" rows="2" maxlength="1200" placeholder="今天必须推进的一件事">'+E(note.priority||"")+'</textarea><label>最小行动</label><textarea name="minimum" rows="2" maxlength="1200" placeholder="可以完成、可以验证的下一步">'+E(note.minimum||"")+'</textarea><label>回顾与校准</label><textarea name="reflection" rows="2" maxlength="1200" placeholder="哪些假设被证实，哪些需要改变？">'+E(note.reflection||"")+'</textarea><button class="pd-primary" type="submit">保存今日方向</button></form></section>',
+ '<div class="pd-day-grid"><section class="pd-panel"><div class="pd-heading"><h3>研究方向 · 每日复盘</h3><span>'+E(currentDailyDate)+'</span></div>'+dailyDateNav+'<form class="pd-form pd-daily" data-pd-form="daily"><label>今天最重要的研究问题</label><textarea name="priority" rows="2" maxlength="1200" placeholder="今天必须推进的一件事">'+E(note.priority||"")+'</textarea><label>最小行动</label><textarea name="minimum" rows="2" maxlength="1200" placeholder="可以完成、可以验证的下一步">'+E(note.minimum||"")+'</textarea><label>回顾与校准</label><textarea name="reflection" rows="2" maxlength="1200" placeholder="哪些假设被证实，哪些需要改变？">'+E(note.reflection||"")+'</textarea><button class="pd-primary" type="submit">保存'+(currentDailyDate===today?"今日":"所选日期")+'方向</button></form>'+historyDailyDates+'</section>',
  '<section class="pd-panel"><div class="pd-heading"><h3>任务四象限</h3><span>重要 × 紧急</span></div><form class="pd-task-form" data-pd-form="task"><input name="title" required maxlength="250" placeholder="新增一项可执行任务"/><select name="projectId">'+choices()+'</select><select name="quadrant">'+QUADS.map(q=>'<option value="'+q[0]+'">'+q[0]+' '+q[1]+'</option>').join("")+'</select><input name="due" type="date" title="截止日期"/><button class="pd-primary">添加</button></form><div class="pd-matrix">'+matrix+'</div></section></div>',
  '<div class="pd-title-line"><div><span class="pd-number">03</span><h3>项目与投入</h3><small>进度、任务和真实时间放在一起</small></div></div>',
  '<div class="pd-project-grid"><section class="pd-panel"><div class="pd-heading"><h3>研究项目</h3><span>'+s.projects.length+' 个项目</span></div><form class="pd-form pd-project-form" data-pd-form="project"><input name="title" required maxlength="120" placeholder="项目名称"/><select name="category">'+CATS.map(x=>'<option>'+x+'</option>').join("")+'</select><input name="due" type="date" title="目标日期"/><textarea name="description" rows="2" maxlength="600" placeholder="研究目标 / 可验证结果（可选）"></textarea><button class="pd-primary">＋ 创建项目</button></form><div class="pd-projects">'+(projects||'<p class="pd-empty">目前没有项目，先创建第一条研究主线。</p>')+'</div></section>',
@@ -86,12 +90,25 @@ export function renderProjectDay(root,api){
  ].join("");
  const persist=(message="已提交私人数据同步")=>{api.save();api.toast(message);};
  const redraw=()=>renderProjectDay(root,api);
+ let dailyDirty=false;
+ const switchDailyDate=date=>{
+   if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return;
+   if(dailyDirty&&!confirm("当前有未保存的修改，确定切换日期吗？"))return;
+   dailySelectedDate=date;redraw();
+ };
  if(ticker)clearInterval(ticker);
  ticker=setInterval(()=>{const node=root.querySelector("#pd-clock");if(node)node.textContent=clock();},1000);
  root.onclick=e=>{
   const button=e.target.closest("[data-pd-act]");if(!button||!root.contains(button))return;
   const act=button.dataset.pdAct,key=button.dataset.id;
   if(act==="idea-kind"){kind=button.dataset.pdKind;redraw();return;}
+  if(act==="daily-prev"||act==="daily-next"){
+   const day=new Date(currentDailyDate+"T12:00:00");
+   day.setDate(day.getDate()+(act==="daily-next"?1:-1));
+   switchDailyDate(iso(day));return;
+  }
+  if(act==="daily-today"){switchDailyDate(NOW());return;}
+  if(act==="daily-open"){switchDailyDate(button.dataset.date||"");return;}
   if(act==="progress-open"){
    if(progressEditorProjectId===key){progressEditorProjectId="";progressEditorNoteId="";}
    else {progressEditorProjectId=key;progressEditorNoteId="";}
@@ -150,8 +167,13 @@ export function renderProjectDay(root,api){
    s.timer.elapsedMs=0;s.timer.startedAt=null;s.timer.segments=[];persist();redraw();
   }
  };
+ root.oninput=e=>{
+  const target=e.target;
+  if(target?.closest?.('[data-pd-form="daily"]')&&["priority","minimum","reflection"].includes(target.name))dailyDirty=true;
+ };
  root.onchange=e=>{
   const el=e.target,act=el.dataset.pdChange;
+  if(act==="daily-date"){switchDailyDate(el.value);return;}
   if(act==="timer-project"){
    if(s.timer.startedAt){api.toast("请暂停计时再切换项目");el.value=s.timer.projectId;return;}
    s.timer.projectId=el.value;persist();return;
@@ -193,8 +215,11 @@ export function renderProjectDay(root,api){
    if(!value("text"))return;
    const idea={id:ID(),type:kind,text:value("text").slice(0,2500),date:NOW()};s.ideas.push(idea);activity("research-idea:"+idea.id,"记录科研"+kind,idea.text.slice(0,100));
   }else if(which==="daily"){
-   s.daily[NOW()]={priority:value("priority").slice(0,1200),minimum:value("minimum").slice(0,1200),reflection:value("reflection").slice(0,1200)};
-   activity("research-review:"+ID(),"科研每日重点 / 复盘",s.daily[NOW()].reflection||s.daily[NOW()].priority);
+   const priority=value("priority").slice(0,1200),minimum=value("minimum").slice(0,1200),reflection=value("reflection").slice(0,1200);
+   if(!priority&&!minimum&&!reflection){api.toast("请先填写至少一项研究方向或复盘内容");return;}
+   s.daily[currentDailyDate]={priority,minimum,reflection};
+   activity("research-review:"+ID(),"保存 "+currentDailyDate+" 科研方向 / 复盘",reflection||priority||minimum);
+   dailyDirty=false;
   }else if(which==="session"){
    const minutes=Math.floor(Number(value("minutes")));
    if(!Number.isFinite(minutes)||minutes<1||minutes>1440){api.toast("时间请输入 1 至 1440 分钟");return;}
