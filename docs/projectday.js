@@ -31,7 +31,7 @@ export function normalizeProjectDay(x){
  }
  return d;
 }
-let kind="灵感",weekOffset=0,ticker,progressEditorProjectId="",progressEditorNoteId="",dailySelectedDate="";
+let kind="灵感",weekOffset=0,ticker,progressEditorProjectId="",progressEditorNoteId="",dailySelectedDate="",projectEditId="",taskEditId="",sessionEditId="",ideaEditId="";
 export function renderProjectDay(root,api){
  const data=api.data(),s=data.projectday=normalizeProjectDay(data.projectday);
  const today=NOW(), monday=new Date(today+"T12:00:00");
@@ -52,7 +52,10 @@ export function renderProjectDay(root,api){
  const clock=()=>{const x=Math.floor(secTimer()/1000);return [Math.floor(x/3600),Math.floor(x/60)%60,x%60].map(y=>String(y).padStart(2,"0")).join(":");};
  const choices=(selected="")=>'<option value="">选择项目</option>'+s.projects.map(p=>'<option value="'+E(p.id)+'"'+(p.id===selected?" selected":"")+'>'+E(p.title)+'</option>').join("");
  const statuses=now=>statusList.map(x=>'<option value="'+x+'"'+(now===x?" selected":"")+'>'+x+'</option>').join("");
- const taskRow=t=>'<div class="pd-task'+(t.done?" done":"")+'"><label><input type="checkbox" data-pd-change="task-done" data-id="'+E(t.id)+'"'+(t.done?" checked":"")+'/>'+E(t.title)+'</label><div class="pd-task-foot"><small>'+E(pname(t.projectId))+(t.due?" · "+E(t.due):"")+'</small><button type="button" data-pd-act="remove-task" data-id="'+E(t.id)+'">×</button></div></div>';
+ const taskRow=t=>{
+  if(taskEditId===t.id)return '<form class="pd-task-edit-form" data-pd-form="task-edit" data-id="'+E(t.id)+'"><input name="title" required maxlength="250" aria-label="任务名称" value="'+E(t.title)+'"/><select name="projectId" aria-label="所属项目">'+choices(t.projectId)+'</select><select name="quadrant" aria-label="任务优先级">'+QUADS.map(q=>'<option value="'+q[0]+'"'+(q[0]===t.quadrant?' selected':'')+'>'+q[0]+' '+q[1]+'</option>').join("")+'</select><input name="due" type="date" aria-label="截止日期" value="'+E(t.due||"")+'"/><label class="pd-task-edit-done"><input name="done" type="checkbox" value="yes"'+(t.done?' checked':'')+'/> 已完成</label><div><button class="pd-primary" type="submit">保存</button><button type="button" data-pd-act="task-cancel">取消</button></div></form>';
+  return '<div class="pd-task'+(t.done?" done":"")+'"><label><input type="checkbox" data-pd-change="task-done" data-id="'+E(t.id)+'"'+(t.done?" checked":"")+'/> '+E(t.title)+'</label><div class="pd-task-foot"><small>'+E(pname(t.projectId))+(t.due?" · "+E(t.due):"")+'</small><div><button type="button" data-pd-act="task-edit" data-id="'+E(t.id)+'">编辑</button><button type="button" data-pd-act="remove-task" data-id="'+E(t.id)+'">×</button></div></div></div>';
+ };
  const matrix=QUADS.map(q=>'<section class="pd-quad pd-'+q[0].toLowerCase()+'"><header><b>'+q[0]+'</b><div><strong>'+q[1]+'</strong><small>'+q[2]+'</small></div><span>'+s.tasks.filter(x=>x.quadrant===q[0]&&!x.done).length+'</span></header><div>'+((s.tasks.filter(t=>t.quadrant===q[0]).map(taskRow).join(""))||'<p class="pd-empty">暂无任务</p>')+'</div></section>').join("");
  const projects=s.projects.map(p=>{
    const ts=s.tasks.filter(x=>x.projectId===p.id),done=ts.filter(x=>x.done).length;
@@ -64,10 +67,14 @@ export function renderProjectDay(root,api){
    const editor=editorOpen?'<form class="pd-form pd-progress-form" data-pd-form="progress-note" data-project-id="'+E(p.id)+'"><label>日期<input name="date" type="date" value="'+E(editing?.date||today)+'" required/></label><label>本次进展<textarea name="text" rows="4" maxlength="4000" required placeholder="这段时间推进了什么？结果如何？遇到了什么问题？">'+E(editing?.text||"")+'</textarea></label><label>下一步 / 当前阻碍（选填）<textarea name="nextStep" rows="2" maxlength="800" placeholder="接下来准备验证什么，或还卡在哪里？">'+E(editing?.nextStep||"")+'</textarea></label><div class="pd-progress-actions"><button class="pd-primary" type="submit">'+(editing?"保存修改":"保存进展")+'</button><button type="button" data-pd-act="progress-cancel">取消</button></div></form>':'';
    const noteRows=notes.map(n=>'<article class="pd-progress-note"><header><time>'+E(n.date||"未注明日期")+'</time><div><button type="button" data-pd-act="progress-edit" data-id="'+E(p.id)+'" data-note-id="'+E(n.id)+'">编辑</button><button type="button" data-pd-act="progress-delete" data-id="'+E(p.id)+'" data-note-id="'+E(n.id)+'">删除</button></div></header><p>'+E(n.text)+'</p>'+(n.nextStep?'<small><b>下一步</b> · '+E(n.nextStep)+'</small>':'')+'</article>').join("");
    const history=notes.length?'<details class="pd-progress-history"'+(editorOpen?' open':'')+'><summary>项目进展 · '+notes.length+' 条</summary><div class="pd-progress-list">'+noteRows+'</div></details>':'<p class="pd-progress-empty">还没有进展记录。</p>';
-   return '<article class="pd-project"><div class="pd-project-top"><div><h3>'+E(p.title)+'</h3><p>'+E(p.description||p.category||"研究项目")+'</p></div><select data-pd-change="project-status" data-id="'+E(p.id)+'">'+statuses(p.status)+'</select></div><div class="pd-bar"><span style="width:'+percent+'%"></span></div><footer><small>'+done+'/'+ts.length+' 项完成 · '+duration(time)+' 投入'+(p.due?" · "+E(p.due):"")+'</small><button type="button" data-pd-act="remove-project" data-id="'+E(p.id)+'">删除</button></footer><div class="pd-project-progress-toolbar"><span>进展记录 · '+notes.length+' 条</span><button type="button" data-pd-act="progress-open" data-id="'+E(p.id)+'">'+(editorOpen?"收起编辑":"＋ 记录进展")+'</button></div>'+history+editor+'</article>';
+   const projectEditor=projectEditId===p.id?'<form class="pd-form pd-project-edit-form" data-pd-form="project-edit" data-id="'+E(p.id)+'"><label>项目名称<input name="title" required maxlength="120" value="'+E(p.title)+'"/></label><div class="pd-project-edit-row"><label>项目类别<select name="category">'+CATS.map(c=>'<option'+(c===(p.category||"实验")?' selected':'')+'>'+c+'</option>').join("")+'</select></label><label>目标日期<input name="due" type="date" value="'+E(p.due||"")+'"/></label></div><label>研究目标与项目描述<textarea name="description" rows="3" maxlength="600" placeholder="研究目标、可验证结果或补充说明">'+E(p.description||"")+'</textarea></label><div class="pd-progress-actions"><button class="pd-primary" type="submit">保存项目</button><button type="button" data-pd-act="project-cancel">取消</button></div></form>':'';
+   return '<article class="pd-project"><div class="pd-project-top"><div><div class="pd-project-title-row"><h3>'+E(p.title)+'</h3><button type="button" data-pd-act="project-edit" data-id="'+E(p.id)+'">编辑项目</button></div><p>'+E(p.description||p.category||"研究项目")+'</p></div><select aria-label="项目状态" data-pd-change="project-status" data-id="'+E(p.id)+'">'+statuses(p.status)+'</select></div>'+projectEditor+'<div class="pd-bar"><span style="width:'+percent+'%"></span></div><footer><small>'+done+'/'+ts.length+' 项完成 · '+duration(time)+' 投入'+(p.due?" · "+E(p.due):"")+'</small><button type="button" data-pd-act="remove-project" data-id="'+E(p.id)+'">删除</button></footer><div class="pd-project-progress-toolbar"><span>进展记录 · '+notes.length+' 条</span><button type="button" data-pd-act="progress-open" data-id="'+E(p.id)+'">'+(editorOpen?"收起编辑":"＋ 记录进展")+'</button></div>'+history+editor+'</article>';</article>';
  }).join("");
- const log=s.sessions.slice(-10).reverse().map(x=>'<div class="pd-log"><time>'+E(x.date)+'</time><div><b>'+E(pname(x.projectId))+'</b><p>'+E(x.note||"专注时段")+'</p></div><strong>'+duration(x.seconds)+'</strong><button type="button" data-pd-act="remove-session" data-id="'+E(x.id)+'">×</button></div>').join("");
- const ideas=s.ideas.slice(-10).reverse().map(x=>'<div class="pd-idea"><span>'+E(x.type)+'</span><p>'+E(x.text)+'</p><small>'+E(x.date)+'</small><button type="button" data-pd-act="remove-idea" data-id="'+E(x.id)+'">×</button></div>').join("");
+ const log=s.sessions.slice(-10).reverse().map(x=>{
+  if(sessionEditId===x.id)return '<form class="pd-session-edit-form" data-pd-form="session-edit" data-id="'+E(x.id)+'"><label>日期<input type="date" name="date" required value="'+E(x.date||today)+'"/></label><label>项目<select name="projectId" required>'+choices(x.projectId)+'</select></label><label>投入分钟<input type="number" name="minutes" min="1" max="1440" required value="'+Math.max(1,Math.round((Number(x.seconds)||60)/60))+'"/></label><label>开始时间（可选）<input type="time" name="startTime" value="'+E(x.startTime||"")+'"/></label><label>记录内容<input name="note" maxlength="250" value="'+E(x.note||"")+'"/></label><div><button class="pd-primary" type="submit">保存</button><button type="button" data-pd-act="session-cancel">取消</button></div></form>';
+  return '<div class="pd-log"><time>'+E(x.date)+'</time><div><b>'+E(pname(x.projectId))+'</b><p>'+E(x.note||"专注时段")+'</p></div><strong>'+duration(x.seconds)+'</strong><div class="pd-record-actions"><button type="button" data-pd-act="session-edit" data-id="'+E(x.id)+'">编辑</button><button type="button" data-pd-act="remove-session" data-id="'+E(x.id)+'">×</button></div></div>';
+ }).join("");
+ const ideas=s.ideas.slice(-10).reverse().map(x=>ideaEditId===x.id?'<form class="pd-idea-edit-form" data-pd-form="idea-edit" data-id="'+E(x.id)+'"><label>类别<select name="type">'+KINDS.map(k=>'<option'+(k===x.type?' selected':'')+'>'+k+'</option>').join("")+'</select></label><label>日期<input name="date" type="date" required value="'+E(x.date||today)+'"/></label><textarea name="text" rows="4" maxlength="2500" required>'+E(x.text)+'</textarea><div><button class="pd-primary" type="submit">保存</button><button type="button" data-pd-act="idea-cancel">取消</button></div></form>':'<div class="pd-idea"><span>'+E(x.type)+'</span><p>'+E(x.text)+'</p><small>'+E(x.date)+'</small><div class="pd-record-actions"><button type="button" data-pd-act="idea-edit" data-id="'+E(x.id)+'">编辑</button><button type="button" data-pd-act="remove-idea" data-id="'+E(x.id)+'">×</button></div></div>').join("");
  const currentDailyDate=/^\d{4}-\d{2}-\d{2}$/.test(dailySelectedDate)?dailySelectedDate:today;
  const note=s.daily[currentDailyDate]||{};
  const savedDailyDates=Object.keys(s.daily||{}).filter(date=>/^\d{4}-\d{2}-\d{2}$/.test(date)&&s.daily[date]&&typeof s.daily[date]==="object"&&["priority","minimum","reflection"].some(k=>String(s.daily[date][k]||"").trim())).sort().reverse();
@@ -109,6 +116,14 @@ export function renderProjectDay(root,api){
   }
   if(act==="daily-today"){switchDailyDate(NOW());return;}
   if(act==="daily-open"){switchDailyDate(button.dataset.date||"");return;}
+  if(act==="project-edit"){projectEditId=projectEditId===key?"":key;redraw();return;}
+  if(act==="project-cancel"){projectEditId="";redraw();return;}
+  if(act==="task-edit"){taskEditId=key;redraw();return;}
+  if(act==="task-cancel"){taskEditId="";redraw();return;}
+  if(act==="session-edit"){sessionEditId=key;redraw();return;}
+  if(act==="session-cancel"){sessionEditId="";redraw();return;}
+  if(act==="idea-edit"){ideaEditId=key;redraw();return;}
+  if(act==="idea-cancel"){ideaEditId="";redraw();return;}
   if(act==="progress-open"){
    if(progressEditorProjectId===key){progressEditorProjectId="";progressEditorNoteId="";}
    else {progressEditorProjectId=key;progressEditorNoteId="";}
@@ -136,6 +151,10 @@ export function renderProjectDay(root,api){
    if(!field)return;
    s[field]=s[field].filter(x=>x.id!==key);
    if(field==="projects"&&progressEditorProjectId===key){progressEditorProjectId="";progressEditorNoteId="";}
+   if(field==="projects"&&projectEditId===key)projectEditId="";
+   if(field==="tasks"&&taskEditId===key)taskEditId="";
+   if(field==="sessions"&&sessionEditId===key)sessionEditId="";
+   if(field==="ideas"&&ideaEditId===key)ideaEditId="";
    if(field==="projects"&&s.timer.projectId===key){s.timer.startedAt=null;s.timer.elapsedMs=0;s.timer.segments=[];s.timer.projectId="";}
    persist();redraw();return;
   }
@@ -192,7 +211,36 @@ export function renderProjectDay(root,api){
   e.preventDefault();
   const form=new FormData(f),value=k=>String(form.get(k)||"").trim();
   const which=f.dataset.pdForm;
-  if(which==="progress-note"){
+  if(which==="project-edit"){
+   const project=getProject(f.dataset.id);if(!project){api.toast("找不到这个项目");return;}
+   const title=value("title");if(!title){api.toast("项目名称不能为空");return;}
+   const due=value("due");if(due&&!/^\d{4}-\d{2}-\d{2}$/.test(due)){api.toast("目标日期无效");return;}
+   Object.assign(project,{title:title.slice(0,120),category:CATS.includes(value("category"))?value("category"):"其他",due,description:value("description").slice(0,600)});
+   projectEditId="";persist("项目资料已修改并同步");redraw();return;
+  }else if(which==="task-edit"){
+   const task=s.tasks.find(x=>x.id===f.dataset.id);if(!task){api.toast("找不到这项任务");return;}
+   const title=value("title");if(!title){api.toast("任务名称不能为空");return;}
+   const due=value("due");if(due&&!/^\d{4}-\d{2}-\d{2}$/.test(due)){api.toast("截止日期无效");return;}
+   const wasDone=task.done;
+   Object.assign(task,{title:title.slice(0,250),projectId:value("projectId"),quadrant:QUADS.some(q=>q[0]===value("quadrant"))?value("quadrant"):"Q2",due,done:form.get("done")==="yes"});
+   if(task.done&&!wasDone)activity("research-task:"+task.id+":"+ID(),"完成科研任务",task.title);
+   taskEditId="";persist("任务内容已修改并同步");redraw();return;
+  }else if(which==="session-edit"){
+   const item=s.sessions.find(x=>x.id===f.dataset.id);if(!item){api.toast("找不到这条投入记录");return;}
+   const minutes=Math.floor(Number(value("minutes")));
+   if(!Number.isFinite(minutes)||minutes<1||minutes>1440){api.toast("时间请输入 1 至 1440 分钟");return;}
+   if(!getProject(value("projectId"))){api.toast("请选择项目");return;}
+   const date=value("date");if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){api.toast("请输入有效日期");return;}
+   const startTime=value("startTime");let endTime="";
+   if(startTime){const m=/^([01]\d|2[0-3]):([0-5]\d)$/.exec(startTime);if(!m){api.toast("开始时间格式错误");return;}const t=Number(m[1])*60+Number(m[2])+minutes;if(t>1440){api.toast("时间段不能跨越午夜，请拆成两条补记");return;}endTime=String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0");}
+   Object.assign(item,{date,projectId:value("projectId"),seconds:minutes*60,startTime,endTime,note:value("note").slice(0,250)||"时间补记"});
+   sessionEditId="";persist("投入记录已修改并同步");redraw();return;
+  }else if(which==="idea-edit"){
+   const item=s.ideas.find(x=>x.id===f.dataset.id);if(!item){api.toast("找不到这条记录");return;}
+   const text=value("text"),date=value("date");if(!text){api.toast("记录内容不能为空");return;}if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){api.toast("请选择有效日期");return;}
+   Object.assign(item,{type:KINDS.includes(value("type"))?value("type"):"灵感",text:text.slice(0,2500),date});
+   ideaEditId="";persist("灵感记录已修改并同步");redraw();return;
+  }else if(which==="progress-note"){
    const project=getProject(f.dataset.projectId);
    if(!project){api.toast("找不到这个项目");return;}
    const date=value("date"),text=value("text"),nextStep=value("nextStep");
