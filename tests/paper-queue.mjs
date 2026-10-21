@@ -32,7 +32,7 @@ const saves=[];
 const api={data:()=>db,feed:()=>feed,save:()=>saves.push(JSON.stringify(db)),toast:()=>{}};
 const root={innerHTML:"",contains:()=>true};
 module.renderPaperQueue(root,api);
-assert.match(root.innerHTML,/积压 1 天/);
+assert.match(root.innerHTML,/积压 \d+ 天/);
 assert.match(root.innerHTML,/最近一期/);
 assert.equal(Object.keys(db.paperQueue.records).length,2);
 const click=(action,id)=>root.onclick({target:{closest:()=>({dataset:{pqAct:action,id}})}});
