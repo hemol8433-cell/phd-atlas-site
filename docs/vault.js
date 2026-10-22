@@ -88,7 +88,7 @@ export async function renderVault(root,api){
     const path=prefix+"images/"+Date.now()+"-"+crypto.randomUUID()+"."+ext;
     const {error}=await storage.upload(path,file,{contentType:file.type,cacheControl:"3600",upsert:false});
     if(error){notice("截图上传失败："+error.message);continue;}
-    db.vaultFiles.push({path,name:"粘贴截图 "+new Date().toLocaleString("zh-CN"),mime:file.type,size:file.size,category:"images",note:"剪贴板截图",createdAt:new Date().toISOString()});
+    db.vaultFiles.push({path,name:"粘贴截图 "+new Date().toLocaleString("zh-CN")+"."+ext,mime:file.type,size:file.size,category:"images",note:"剪贴板截图",createdAt:new Date().toISOString()});
     success++;
    }
    if(success){api.save();filesMap.clear();db.vaultFiles.forEach(v=>filesMap.set(v.path,v));await refresh();notice("已将 "+success+" 张截图保存至私人资料库");}
