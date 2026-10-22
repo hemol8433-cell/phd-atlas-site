@@ -32,6 +32,8 @@ jobs:
         run: node tests/projectday.mjs
       - name: Test personal modules
         run: node tests/personal-modules.mjs
+      - name: Test screenshot clipboard and private references
+        run: node tests/clipboard-images.mjs
       - name: Test private daily schedule
         run: node tests/daybook.mjs
       - name: Test seven-day synchronized schedule
@@ -52,7 +54,7 @@ jobs:
           docs=Path('docs')
           allowed={'index.html','app.html','auth-config.js','auth-core.js',
                    'auth-gate.js','login.js','research.css','research.js',
-                   'papers.html','.nojekyll','projectday.js','projectday.css','life.js','vault.js','personal-refresh.css','daybook.js','minimal-home.css','weekboard.js','weekboard.css','milestones.js','milestones.css','paper-queue.js','quiet-ui.css','home-atmosphere.js','home-atmosphere.css'}
+                   'papers.html','.nojekyll','projectday.js','projectday.css','life.js','vault.js','personal-refresh.css','daybook.js','minimal-home.css','weekboard.js','weekboard.css','milestones.js','milestones.css','paper-queue.js','quiet-ui.css','home-atmosphere.js','home-atmosphere.css','clipboard-images.js','clipboard-images.css'}
           found={p.name for p in docs.rglob('*') if p.is_file()}
           assert found==allowed, f'Unexpected public assets: {found.symmetric_difference(allowed)}'
           assert 'githubLogin' in (docs/'index.html').read_text()
