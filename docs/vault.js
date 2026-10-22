@@ -37,7 +37,7 @@ export async function renderVault(root,api){
  const categorySelect=Object.entries(TYPES).map(([k,v])=>'<option value="'+k+'">'+v+'</option>').join("");
  const tabs=[["all","全部资料"],...Object.entries(TYPES)];
  root.innerHTML='<div class="vt-hero"><div><span class="vt-overline">MY PRIVATE CLOUD · FILE LIBRARY</span><h2>我的资料库 <em>Private Vault</em></h2><p>科研与生活的照片、PDF、Word 和表格可以上传、预览、下载，并在其他电脑登录后访问。</p></div><div class="vt-lock">🔒 私人文件空间</div></div>'+
- '<div class="vt-layout"><section class="vt-panel"><div class="vt-panel-head"><h3>上传文件</h3><small>非公开存储 · 单文件不超过 25 MB</small></div><form id="vaultUpload"><label>文件类别</label><select name="category">'+categorySelect+'</select><label>选择图片或文档</label><input type="file" name="files" multiple required accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,.txt,.md,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx"/><label>备注（可选）</label><textarea name="note" rows="3" maxlength="250" placeholder="这份资料是什么？方便未来检索。"></textarea><button type="submit" class="vt-button">上传到私人云端</button></form><p class="vt-tip">支持 JPG/PNG/WebP/GIF、PDF、Word、Excel、PPT、TXT、Markdown、CSV。文件只保存在 Supabase 私人存储，不会提交到公开 GitHub 仓库。</p><div id="vaultMessage" class="vt-message" role="status"></div></section>'+
+ '<div class="vt-layout"><section class="vt-panel"><div class="vt-panel-head"><h3>上传文件</h3><small>非公开存储 · 单文件不超过 25 MB</small></div><form id="vaultUpload"><label>文件类别</label><select name="category">'+categorySelect+'</select><label>选择图片或文档</label><input type="file" name="files" multiple required accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,.txt,.md,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx"/><label>备注（可选）</label><textarea name="note" rows="3" maxlength="250" placeholder="这份资料是什么？方便未来检索。"></textarea><button type="submit" class="vt-button">上传到私人云端</button></form><div id="vaultPaste" class="vt-paste-zone" contenteditable="true" role="textbox" spellcheck="false" aria-label="粘贴截图区域">📋 点击这里，按 Ctrl+V 粘贴截图</div><p class="vt-tip">支持 JPG/PNG/WebP/GIF、PDF、Word、Excel、PPT、TXT、Markdown、CSV。文件只保存在 Supabase 私人存储，不会提交到公开 GitHub 仓库。</p><div id="vaultMessage" class="vt-message" role="status"></div></section>'+
  '<section class="vt-panel vt-files"><div class="vt-panel-head"><h3>文件资料</h3><span id="vaultCount">加载中…</span></div><div class="vt-tabs">'+tabs.map(([k,v])=>'<button type="button" data-vt-filter="'+k+'" class="'+(k===category?"active":"")+'">'+v+'</button>').join("")+'</div><div id="vaultList" class="vt-file-list"><p class="vt-empty">正在读取私人云端文件…</p></div></section></div>'+
  '<dialog id="vaultPreview" class="vt-preview"><div class="vt-preview-head"><strong id="vaultPreviewName">预览</strong><button type="button" id="vaultClose">关闭 ×</button></div><div id="vaultPreviewBody"></div></dialog>';
  const notice=text=>{root.querySelector("#vaultMessage").textContent=text;api.toast(text);};
@@ -71,6 +71,31 @@ export async function renderVault(root,api){
   show();
  }
  await refresh();
+ const pasteZone=root.querySelector("#vaultPaste");
+ pasteZone.addEventListener("paste",async event=>{
+  event.preventDefault();
+  if(busy){notice("文件正在上传，请稍后再试");return;}
+  const items=[...(event.clipboardData?.items||[])];
+  const files=items.filter(x=>x.kind==="file"&&x.type.startsWith("image/")).map(x=>x.getAsFile()).filter(Boolean).slice(0,4);
+  if(!files.length){notice("剪贴板中没有图片，请先截图或复制图片");return;}
+  const extByType={"image/png":"png","image/jpeg":"jpg","image/webp":"webp","image/gif":"gif"};
+  busy=true;pasteZone.textContent="正在保存 "+files.length+" 张私人截图…";
+  let success=0;
+  try{
+   for(const file of files){
+    const ext=extByType[file.type];
+    if(!ext||!fileIsAllowed({name:"clipboard."+ext,type:file.type,size:file.size})){notice("截图格式或大小不符合要求，单张不超过 25 MB");continue;}
+    const path=prefix+"images/"+Date.now()+"-"+crypto.randomUUID()+"."+ext;
+    const {error}=await storage.upload(path,file,{contentType:file.type,cacheControl:"3600",upsert:false});
+    if(error){notice("截图上传失败："+error.message);continue;}
+    db.vaultFiles.push({path,name:"粘贴截图 "+new Date().toLocaleString("zh-CN"),mime:file.type,size:file.size,category:"images",note:"剪贴板截图",createdAt:new Date().toISOString()});
+    success++;
+   }
+   if(success){api.save();filesMap.clear();db.vaultFiles.forEach(v=>filesMap.set(v.path,v));await refresh();notice("已将 "+success+" 张截图保存至私人资料库");}
+  }catch(error){notice("截图保存失败："+(error?.message||"未知错误"));}
+  finally{busy=false;pasteZone.textContent="📋 点击这里，按 Ctrl+V 粘贴截图";}
+ });
+ pasteZone.addEventListener("input",()=>{if(!pasteZone.textContent.includes("Ctrl+V"))pasteZone.textContent="📋 点击这里，按 Ctrl+V 粘贴截图";});
  root.querySelector("#vaultClose").onclick=()=>closePreview(root);
  root.querySelector("#vaultPreview").addEventListener("close",()=>closePreview(root));
  root.addEventListener("submit",async event=>{
