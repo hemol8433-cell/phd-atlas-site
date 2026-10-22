@@ -328,4 +328,7 @@ $('topDate').textContent=verboseDate(TODAY);
 const h=window.location.hash.replace('#','');if(meta[h])view=h;
 window.addEventListener('hashchange',()=>{const next=window.location.hash.slice(1);if(next==='home'||next==='dashboard'||next==='schedule')view='dashboard';else if(meta[next])view=next;render()});
 render();refreshPapers();
+import("./clipboard-images.js?v=20261022-paste1").then(mod=>{
+ mod.installClipboardImages({session,getData:()=>db,save,toast});
+}).catch(error=>{console.error("Private clipboard images unavailable",error);toast("截图粘贴功能未能加载，请刷新页面");});
 })();
