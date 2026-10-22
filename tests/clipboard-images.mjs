@@ -22,7 +22,7 @@ const clipboard={items:[{kind:"string",type:"text/plain"}, {kind:"file",type:"im
 assert.deepEqual(screenshots.clipboardImages(clipboard),[file]);
 assert.deepEqual(screenshots.clipboardImages({items:[{kind:"file",type:"application/pdf",getAsFile:()=>file}]}),[]);
 assert(moduleSource.includes('const BUCKET = "phd-atlas-private"'),"Images must use the private bucket");
-assert(moduleSource.includes('uid+"/uploads/images/"'),"Image paths must be owner scoped");
+assert(moduleSource.includes('uid+"/uploads/images/clipboard-"'),"Image paths must be owner scoped");
 assert(!moduleSource.includes("getPublicUrl"),"Never expose private images by public URL");
 const research=await fs.readFile(new URL("../docs/research.js",import.meta.url),"utf8");
 const html=await fs.readFile(new URL("../docs/app.html",import.meta.url),"utf8");
