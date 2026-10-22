@@ -28,4 +28,8 @@ const research=await fs.readFile(new URL("../docs/research.js",import.meta.url),
 const html=await fs.readFile(new URL("../docs/app.html",import.meta.url),"utf8");
 assert(research.includes('installClipboardImages({session,getData:()=>db,save,toast})'),"Attach to private authenticated workspace");
 assert(html.includes("clipboard-images.css"),"Paste indicator and screenshot viewer styles should load");
+const vaultSource=await fs.readFile(new URL("../docs/vault.js",import.meta.url),"utf8");
+assert(vaultSource.includes('id="vaultPaste"'),"Private vault should expose a focusable paste target");
+assert(vaultSource.includes('pasteZone.addEventListener("paste"'),"Private vault clipboard target should upload images");
+assert(vaultSource.includes('prefix+"images/"'),"Private vault screenshot uploads must stay inside the owner namespace");
 console.log("PASS: secure clipboard image types, 25MB limit, persistent image markers, editor insertion, and private app wiring");
