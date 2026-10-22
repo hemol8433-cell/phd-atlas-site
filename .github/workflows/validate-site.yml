@@ -25,6 +25,7 @@ jobs:
           node --check docs/auth-gate.js
           node --check docs/login.js
           node --check docs/auth-config.js
+          node --check docs/clipboard-images.js
       - name: Test login session states
         run: node tests/auth-session.mjs
       - name: Test ProjectDay workflows
