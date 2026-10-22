@@ -23,7 +23,7 @@ try {
     document.querySelector(".header-right")?.prepend(btn);
     document.documentElement.style.visibility = "visible";
     const script = document.createElement("script");
-    script.src = "./research.js?v=20261021-editable-workspace";
+    script.src = "./research.js?v=20261022-paste1";
     script.defer = true;
     document.body.appendChild(script);
   }
