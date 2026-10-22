@@ -98,7 +98,7 @@ export function installClipboardImages({session,getData,save,toast}) {
     if(error){notify("截图上传失败："+error.message);continue;}
     const db=getData();
     if(!Array.isArray(db.vaultFiles))db.vaultFiles=[];
-    db.vaultFiles.push({attachmentId:id,path,name:"粘贴截图 "+new Date().toLocaleString("zh-CN"),mime:file.type,size:file.size,category:"images",note:"粘贴至工作台记录",createdAt:new Date().toISOString()});
+    db.vaultFiles.push({attachmentId:id,path,name:"粘贴截图 "+new Date().toLocaleString("zh-CN")+"."+TYPES[file.type],mime:file.type,size:file.size,category:"images",note:"粘贴至工作台记录",createdAt:new Date().toISOString()});
     if(target.isConnected){
      const fresh=appendImageMarker(target.value,id,target.selectionStart??target.value.length,target.selectionEnd??target.value.length,target.maxLength);
      if(fresh){
