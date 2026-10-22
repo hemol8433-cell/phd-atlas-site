@@ -132,3 +132,8 @@ body{background:#f6f7f4;color:#263238}
 .vt-meta-editor>div{display:flex;justify-content:flex-end;gap:8px}
 .vt-meta-editor button{border:1px solid #dce4ef;background:#fff;color:#71819a;border-radius:8px;padding:8px 12px;font-size:11px}
 .vt-meta-editor button[type=submit]{background:#e9edff;border-color:#dce2ff;color:#5365bd}
+
+
+/* Small, focusable clipboard paste target for the private vault. */
+.vt-paste-zone{margin:12px 0 5px;padding:12px 14px;border:1px dashed #ccd7ed;border-radius:10px;background:#f9fbff;color:#69799c;text-align:center;font-size:12px;line-height:1.6;cursor:text;outline:none}
+.vt-paste-zone:focus{border-color:#7b8fd6;box-shadow:0 0 0 3px #e8edff;background:#fff}
