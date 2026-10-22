@@ -1,0 +1,18 @@
+/* Clipboard image attachments: understated, readable and private. */
+.sx-paste-tray{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:5px 0 10px;min-width:0}
+.sx-paste-tray>small{color:#9aa7ba;font-size:10px;line-height:1.7}
+.sx-paste-tray>.sx-upload-status{color:#6474b5;font-weight:650}
+.sx-paste-chip{display:flex;align-items:center;gap:7px;padding:5px 8px;border:1px solid #dee5f1;border-radius:9px;background:#f7f9fe;color:#586b8f;font-size:11px;cursor:pointer;max-width:100%}
+.sx-paste-chip img{width:48px;height:36px;object-fit:cover;border-radius:5px;border:1px solid #e4e8f0;background:#fff}
+.sx-attachment{display:inline-flex;align-items:center;vertical-align:middle;gap:5px;border:1px solid #dae3f0;background:#f3f6ff;color:#5265ab;border-radius:8px;padding:6px 9px;margin:4px 5px 4px 0;font-size:11px;font-weight:650;cursor:pointer}
+.sx-attachment:hover,.sx-paste-chip:hover{background:#e9edff;border-color:#c4cdf0}
+.sx-attachment:disabled{opacity:.7;cursor:default}
+.sx-image-dialog{width:min(940px,calc(100vw - 32px));max-width:940px;max-height:calc(100vh - 35px);padding:0;border:1px solid #e3e9f3;border-radius:14px;background:#fff;color:#273449;box-shadow:0 18px 60px #21305033}
+.sx-image-dialog::backdrop{background:#0b1324a6}
+.sx-image-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid #e8edf4}
+.sx-image-dialog-head strong{font-size:13px}
+.sx-image-dialog-head button{border:1px solid #dfe5ed;background:#f8fafe;padding:7px 10px;color:#61728b;border-radius:8px;cursor:pointer}
+.sx-image-content{display:grid;place-items:center;gap:12px;padding:16px;max-height:calc(100vh - 110px);overflow:auto;min-height:110px}
+.sx-image-content img{display:block;max-width:100%;height:auto;max-height:calc(100vh - 180px);object-fit:contain;border-radius:6px}
+.sx-image-content a{color:#5267b6;font-size:12px;text-decoration:none}
+@media(max-width:520px){.sx-image-content{padding:8px}.sx-paste-chip img{width:40px;height:30px}}
