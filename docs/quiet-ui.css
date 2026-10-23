@@ -60,3 +60,21 @@ footer{font-size:10px;color:#a7b3ac}
 @media(max-width:720px){.pq-summary{gap:7px}.pq-summary>div{padding:13px 10px}.pq-summary strong{font-size:21px}.pq-toolbar{flex-wrap:wrap}.pq-tabs{width:100%}.pq-search{width:100%}.pq-search input{width:100%}.pq-paper{padding:13px}.pq-paper h3{font-size:13px}}
 
 .pq-meta{display:flex;gap:7px;align-items:center;justify-content:flex-end;flex-wrap:wrap}.pq-meta>span:first-child{font-size:10px;color:#96a69a}
+
+
+/* Research first: evidence-based summaries with concise, source-labeled claims. */
+.pq-insights{margin:13px 0 14px;border:1px solid #e4eae2;background:#fafcf9;border-radius:11px;padding:12px 13px}
+.pq-insight-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.pq-insight-heading strong{font-size:11px;font-weight:780;color:#58715d}
+.pq-insight-heading span{font-size:10px;color:#94a394}
+.pq-insight-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 14px}
+.pq-insight-item{min-width:0}
+.pq-insight-item>span{display:block;font-size:10px;font-weight:700;color:#839187;margin-bottom:3px}
+.pq-insight-item p{margin:0;font-size:11px;line-height:1.7;color:#3a4e40;overflow-wrap:anywhere;white-space:pre-wrap}
+.pq-insight-takeaway{background:#eff4ed;border:1px solid #e1eae0;border-radius:9px;padding:9px}
+.pq-insight-takeaway>span{color:#4d7656}
+.pq-insight-caveat{font-size:10px;color:#849485;line-height:1.6;margin:9px 0 0;border-top:1px solid #e7eee5;padding-top:8px}
+.pq-insight-pending{margin:11px 0 15px;padding:11px 12px;border:1px dashed #e0e6dd;border-radius:10px;background:#fbfcfa}
+.pq-insight-pending>span{font-size:11px;color:#899687;font-weight:750}
+.pq-insight-pending p{font-size:10px;line-height:1.65;color:#9aa59a;margin:3px 0 0}
+@media(max-width:700px){.pq-insight-grid{grid-template-columns:1fr}.pq-insights{padding:11px}.pq-insight-heading{flex-wrap:wrap}.pq-insight-takeaway{padding:8px}}
