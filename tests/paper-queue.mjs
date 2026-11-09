@@ -15,6 +15,10 @@ const grounded={
 assert.equal(module.paperResearchLens({analysis:grounded}).ready,true);
 assert.equal(module.paperResearchLens({analysis:null}).ready,false);
 assert.equal(module.paperResearchLens({analysis:{...grounded,basis:"unverified"}}).ready,false);
+const partialEvidence={...grounded,basis:undefined,evidence_level:"原始摘要与部分正文核验；未独立复现"};
+const partialLens=module.paperResearchLens({analysis:partialEvidence});
+assert.equal(partialLens.ready,true,"Evidence level should preserve substantive analysis when basis is omitted");
+assert.equal(partialLens.basis,"部分正文核验 · 未阅读全文","Partial review must not be upgraded to full-text review");
 const feed={
  generated_at:"2026-10-19T09:30:29Z",
  today_ids:["a","b"],
