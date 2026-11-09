@@ -21,13 +21,21 @@ const stablePaper=p=>({
 });
 export function paperResearchLens(p){
  const a=p?.analysis&&typeof p.analysis==="object"?p.analysis:null;
+ const evidence=String(a?.evidence_level||"");
+ // Older feed writers may provide evidence_level but omit the UI's basis enum.
+ // Infer only the review level explicitly stated by that field; never upgrade partial review to full-text review.
+ const basis=String(a?.basis||"").trim()||(
+  /全文核验/.test(evidence)?"full_text_reviewed":
+  /部分正文/.test(evidence)?"partial_text_reviewed":
+  /摘要/.test(evidence)?"abstract_assisted":""
+ );
  const required=["problem","method","results","inspiration"];
  const valid=!!a&&required.every(k=>typeof a[k]==="string"&&a[k].trim().length>=12)
-    &&["abstract_assisted","ai_abstract","full_text_reviewed"].includes(a.basis);
+    &&["abstract_assisted","ai_abstract","partial_text_reviewed","full_text_reviewed"].includes(basis);
  if(!valid)return {ready:false,basis:"尚未分析",problem:"",method:"",results:"",inspiration:"",caveat:""};
  return {ready:true,problem:String(a.problem).slice(0,900),method:String(a.method).slice(0,900),results:String(a.results).slice(0,900),
  inspiration:String(a.inspiration).slice(0,1100),caveat:String(a.caveat||"").slice(0,500),
- basis:a.basis==="full_text_reviewed"?"全文核验":a.basis==="ai_abstract"?"AI 摘要解读 · 未阅读全文":"摘要解读 · 未阅读全文",
+ basis:basis==="full_text_reviewed"?"全文核验":basis==="partial_text_reviewed"?"部分正文核验 · 未阅读全文":basis==="ai_abstract"?"AI 摘要解读 · 未阅读全文":"摘要解读 · 未阅读全文",
  relevance:["直接相关","方法借鉴","间接启发"].includes(a.relevance)?a.relevance:""};
 }
 export function updatePaperQueue(queue,feed,today=localToday()){
